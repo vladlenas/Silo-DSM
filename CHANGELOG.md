@@ -3,6 +3,19 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## 0.5.1 (2026-10-11)
+
+Silo stays at `Silo.1` (commit `fc5795e`).
+
+### Changed
+
+- **Status page is tighter.** Silo and System sit side by side with the same
+  height, Transcoding spans the full width below them (table on the left,
+  VAAPI test on the right), and the VAAPI result box is only as tall as its
+  text. Before, the tall test result stretched the Silo card next to it.
+- **Settings:** the "Torrents" card is gone; torrent settings are in Silo's web
+  interface, as with TorrServer.
+
 ## 0.4.1 (2026-10-11)
 
 Silo stays at `Silo.1` (commit `fc5795e`).

@@ -1250,10 +1250,26 @@ button.danger:disabled,
     font-weight: 600;
 }}
 
+.wide-card {{
+    grid-column: 1 / -1;
+}}
+
+.wide-layout {{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}}
+
+@media (max-width: 800px) {{
+    .wide-layout {{
+        grid-template-columns: 1fr;
+    }}
+}}
+
 .vaapi-form {{
     display: flex;
     gap: 8px;
-    margin-top: 12px;
 }}
 
 .vaapi-form button {{
@@ -1264,17 +1280,18 @@ button.danger:disabled,
     max-width: 260px;
 }}
 
+.vaapi-panel > div {{
+    margin-top: 12px;
+}}
+
 .vaapi-result {{
     box-sizing: border-box;
     max-width: 100%;
+    min-height: 0;
+    margin-top: 6px;
+    padding: 10px 12px;
     overflow-x: auto;
     white-space: pre-wrap;
-}}
-
-.card-note {{
-    margin: 0 0 12px;
-    color: #30415e;
-    line-height: 1.5;
 }}
 
 .path-picker {{
@@ -2058,22 +2075,26 @@ def transcoding_card(settings):
         )
 
     return """
-<div class="dashboard-card">
+<div class="dashboard-card wide-card">
     <div class="dashboard-card-title">
         <span class="metric-icon" data-icon="film"></span>
         <span>Transcoding</span>
     </div>
 
-    <table class="metric-table">
-        <tr><td>Transcoding</td><td>{enabled}</td></tr>
-        <tr><td>FFmpeg</td><td>{ffmpeg}</td></tr>
-        <tr><td>VAAPI in FFmpeg</td><td>{vaapi}</td></tr>
-        <tr><td>Acceleration</td><td>{hwaccel}</td></tr>
-        <tr><td>Render devices</td><td>{dri}</td></tr>
-        <tr><td>Groups</td><td>{groups}</td></tr>
-    </table>
-    {test_form}
-    {result}
+    <div class="wide-layout">
+        <table class="metric-table">
+            <tr><td>Transcoding</td><td>{enabled}</td></tr>
+            <tr><td>FFmpeg</td><td>{ffmpeg}</td></tr>
+            <tr><td>VAAPI in FFmpeg</td><td>{vaapi}</td></tr>
+            <tr><td>Acceleration</td><td>{hwaccel}</td></tr>
+            <tr><td>Render devices</td><td>{dri}</td></tr>
+            <tr><td>Groups</td><td>{groups}</td></tr>
+        </table>
+        <div class="vaapi-panel">
+            {test_form}
+            {result}
+        </div>
+    </div>
 </div>
 """.format(
         enabled=yes_no(settings["ffmpeg_enabled"]),
@@ -2160,7 +2181,6 @@ def main_page(host):
     </table>
 </div>
 
-{transcoding}
 
 <div class="dashboard-card">
     <div class="dashboard-card-title">
@@ -2177,6 +2197,8 @@ def main_page(host):
         <tr><td>Architecture</td><td>{arch}</td></tr>
     </table>
 </div>
+
+{transcoding}
 
 <div class="dashboard-card info-card">
     <div class="info-maintainer-top">TorrServer Silo for Synology, maintained by vladlenas</div>
@@ -2349,21 +2371,6 @@ To apply changes, click <b>Save</b>, then <b>Restart</b>.<br>The settings are wr
 
 <div class="settings-card">
     <div class="settings-card-title">
-        <span class="metric-icon" data-icon="globe"></span>
-        <span>Torrents</span>
-    </div>
-    <div class="settings-card-body">
-
-        <p class="card-note">The torrent engine (RAM or disk cache, cache size, peers, speed limits) is set in Silo's own web interface, in its settings. Silo keeps these settings in its database, so they are not changed here.</p>
-        <div>
-            <a class="button secondary" id="siloSettingsLink" href="#" target="_blank" rel="noopener noreferrer">Open Silo ↗</a>
-        </div>
-
-    </div>
-</div>
-
-<div class="settings-card">
-    <div class="settings-card-title">
         <span class="metric-icon" data-icon="film"></span>
         <span>Transcoding</span>
     </div>
@@ -2442,11 +2449,6 @@ passwordField.addEventListener('blur', function() {{
 }});
 
 toggleAuth();
-
-var siloLink = document.getElementById('siloSettingsLink');
-if (siloLink) {{
-    siloLink.href = 'http://' + window.location.hostname + ':{port}/';
-}}
 </script>
 """.format(
         port=settings["port"],
