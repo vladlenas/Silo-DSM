@@ -17,7 +17,7 @@
   "Detailed (debug)": "Išsamus (debug)",
   "Device must be a node in /dev/dri, for example /dev/dri/renderD128": "Įrenginys turi būti /dev/dri, pavyzdžiui, /dev/dri/renderD128",
   "Disabled": "Išjungta",
-  "Enable transcoding (FFmpeg 7)": "Įjungti perkodavimą (FFmpeg 7)",
+  "Enable transcoding (FFmpeg)": "Įjungti perkodavimą (FFmpeg)",
   "Enabled": "Įjungta",
   "Errors only": "Tik klaidos",
   "FFmpeg threads": "FFmpeg gijos",

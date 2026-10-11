@@ -3,6 +3,19 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## 0.4.1 (2026-10-11)
+
+Silo stays at `Silo.1` (commit `fc5795e`).
+
+### Changed
+
+- **FFmpeg 8.** The package now depends on FFmpeg 8 from SynoCommunity
+  (`install_dep_packages="ffmpeg8"`, 8.1.3 with the Jellyfin patch set).
+  DSM asks to install it before this update. Silo uses FFmpeg 8 when it is
+  installed and falls back to FFmpeg 7, so nothing breaks while both are
+  around; FFmpeg 7 can be uninstalled afterwards if nothing else needs it.
+  The Helper shows the version in use and runs the VAAPI test with it.
+
 ## 0.3.1 (2026-10-11)
 
 Silo stays at `Silo.1` (commit `fc5795e`).

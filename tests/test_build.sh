@@ -53,7 +53,7 @@ echo "== package contents"
 mkdir x && tar -xf spk/Silo-DSM-0.1.9-amd64.spk -C x && mkdir x/pkg && tar -xJf x/package.tgz -C x/pkg
 check "INFO: package name"                 grep -qx 'package="TorrServerSilo"' x/INFO
 check "INFO: beta"                         grep -qx 'beta="yes"' x/INFO
-check "INFO: depends on ffmpeg7"           grep -qx 'install_dep_packages="ffmpeg7"' x/INFO
+check "INFO: depends on ffmpeg8"           grep -qx 'install_dep_packages="ffmpeg8"' x/INFO
 check "INFO: version"                      grep -qx 'version="0.1.9"' x/INFO
 check "INFO: Silo version in description"  grep -q 'description="TorrServer Silo (Silo.9)' x/INFO
 check "binary is bin/silo, executable"     [ -x x/pkg/bin/silo ]

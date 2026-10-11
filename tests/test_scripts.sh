@@ -17,7 +17,7 @@ export SYNOPKG_PKGDEST="$TMP/target"
 export SYNOPKG_PKGVAR="$TMP/var"
 export SYNOPKG_TEMP_LOGFILE="$TMP/templog"
 export PYTHON_CANDIDATES="$PY"
-export FFMPEG_DIR="$TMP/ffmpeg7"
+export FFMPEG_DIR="$TMP/ffmpeg8"
 export SVC_WAIT_TIMEOUT=5
 
 mkdir -p "$SYNOPKG_PKGDEST/bin" "$SYNOPKG_PKGDEST/helper" "$SYNOPKG_PKGDEST/ui" "$SYNOPKG_PKGVAR" "$FFMPEG_DIR"
@@ -48,13 +48,26 @@ alive() { kill -0 "$1" 2>/dev/null && ! grep -q '^State:[[:space:]]*Z' "/proc/$1
 echo "== service-setup"
 (
     . "$TMP/scripts/service-setup"
-    check "ffmpeg7 comes first in PATH"     [ "${PATH%%:*}" = "$FFMPEG_DIR" ]
+    check "ffmpeg comes first in PATH"       [ "${PATH%%:*}" = "$FFMPEG_DIR" ]
     check "silo runs with the config file"  [ "$SILO_COMMAND" = "$SYNOPKG_PKGDEST/bin/silo -c $SYNOPKG_PKGVAR/config.yaml" ]
     check "helper is the first command"     [ "$(printf '%s\n' "$SERVICE_COMMAND" | head -n 1)" = "$PY $SYNOPKG_PKGDEST/helper/helper.py" ]
     check "default port is 8095"            [ "$(silo_port)" = 8095 ]
     printf '{\n  "port": 8123\n}\n' > "$SYNOPKG_PKGVAR/settings.json"
     check "port is read from settings.json" [ "$(silo_port)" = 8123 ]
     rm -f "$SYNOPKG_PKGVAR/settings.json"
+)
+
+echo "== ffmpeg8 is preferred, ffmpeg7 is the fallback"
+(
+    unset FFMPEG_DIR
+    mkdir -p "$TMP/c/ffmpeg8" "$TMP/c/ffmpeg7"
+    printf '#!/bin/sh\n' > "$TMP/c/ffmpeg7/ffmpeg"; chmod +x "$TMP/c/ffmpeg7/ffmpeg"
+    export FFMPEG_CANDIDATES="$TMP/c/ffmpeg8 $TMP/c/ffmpeg7"
+    ( . "$TMP/scripts/service-setup"; check "only ffmpeg7 installed: ffmpeg7" [ "$FFMPEG_DIR" = "$TMP/c/ffmpeg7" ] )
+    printf '#!/bin/sh\n' > "$TMP/c/ffmpeg8/ffmpeg"; chmod +x "$TMP/c/ffmpeg8/ffmpeg"
+    ( . "$TMP/scripts/service-setup"; check "both installed: ffmpeg8"         [ "$FFMPEG_DIR" = "$TMP/c/ffmpeg8" ] )
+    rm -rf "$TMP/c"
+    ( . "$TMP/scripts/service-setup"; check "none installed: ffmpeg8 path"    [ "$FFMPEG_DIR" = "$TMP/c/ffmpeg8" ] )
 )
 
 echo "== postinst takes the wizard answers"
@@ -76,7 +89,7 @@ check "helper alive"                         alive "$HELPER"
 check "silo alive"                           alive "$SILO"
 check "status says running"                  sh "$SSS" status
 check "silo got its config"                  grep -q "fake silo -c $SYNOPKG_PKGVAR/config.yaml" "$SYNOPKG_PKGVAR/Silo.log"
-check "silo got ffmpeg7 first in PATH"       grep -q "PATH=$FFMPEG_DIR:" "$SYNOPKG_PKGVAR/Silo.log"
+check "silo got ffmpeg first in PATH"        grep -q "PATH=$FFMPEG_DIR:" "$SYNOPKG_PKGVAR/Silo.log"
 check "silo runs in the package var folder"  grep -q "cwd=$SYNOPKG_PKGVAR\$" "$SYNOPKG_PKGVAR/Silo.log"
 check "firewall port follows settings"       grep -q 'dst.ports="8130/tcp"' "$SYNOPKG_PKGDEST/ui/Silo.sc"
 
@@ -103,10 +116,10 @@ check "silo stopped"                         sh -c "! { kill -0 $NEW_SILO 2>/dev
 check "pid file removed"                     [ ! -e "$SYNOPKG_PKGVAR/TorrServerSilo.pid" ]
 check "status says stopped"                  sh -c "! sh '$SSS' status >/dev/null"
 
-echo "== missing ffmpeg7 is logged, not fatal"
+echo "== missing ffmpeg is logged, not fatal"
 rm -f "$FFMPEG_DIR/ffmpeg"
 sh "$SSS" start; sleep 1
-check "warning logged"                       grep -q 'FFmpeg 7 was not found' "$SYNOPKG_PKGVAR/Silo.log"
+check "warning logged"                       grep -q 'FFmpeg was not found' "$SYNOPKG_PKGVAR/Silo.log"
 check "still running"                        sh "$SSS" status
 sh "$SSS" stop
 

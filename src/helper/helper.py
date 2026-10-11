@@ -64,9 +64,14 @@ RESTART_MIN_SECONDS = 3
 RESTART_GIVE_UP_SECONDS = 90
 RESTART_STATE = {"started": None}
 
-# FFmpeg 7 from SynoCommunity (install_dep_packages). Same folder that
+# FFmpeg from SynoCommunity: the folder service-setup chose (ffmpeg8, else
+# ffmpeg7) and passed on in FFMPEG_DIR. Same folder that
 # service-setup puts first in Silo's PATH.
-FFMPEG_DIR = os.environ.get("FFMPEG_DIR") or "/var/packages/ffmpeg7/target/bin"
+FFMPEG_CANDIDATES = ("/var/packages/ffmpeg8/target/bin", "/var/packages/ffmpeg7/target/bin")
+FFMPEG_DIR = os.environ.get("FFMPEG_DIR") or next(
+    (d for d in FFMPEG_CANDIDATES if os.access(os.path.join(d, "ffmpeg"), os.X_OK)),
+    FFMPEG_CANDIDATES[0],
+)
 FFMPEG_BIN = os.path.join(FFMPEG_DIR, "ffmpeg")
 DRI_DIR = os.environ.get("SILO_DSM_DRI") or "/dev/dri"
 VIDEO_GROUP = "videodriver"
@@ -893,7 +898,7 @@ def vaapi_test(device):
     Returns ``(ok, report)``.
     """
     if not os.access(FFMPEG_BIN, os.X_OK):
-        return False, "FFmpeg 7 was not found: {}".format(FFMPEG_BIN)
+        return False, "FFmpeg was not found: {}".format(FFMPEG_BIN)
 
     steps = [
         ("Device probe", [
@@ -2061,7 +2066,7 @@ def transcoding_card(settings):
 
     <table class="metric-table">
         <tr><td>Transcoding</td><td>{enabled}</td></tr>
-        <tr><td>FFmpeg 7</td><td>{ffmpeg}</td></tr>
+        <tr><td>FFmpeg</td><td>{ffmpeg}</td></tr>
         <tr><td>VAAPI in FFmpeg</td><td>{vaapi}</td></tr>
         <tr><td>Acceleration</td><td>{hwaccel}</td></tr>
         <tr><td>Render devices</td><td>{dri}</td></tr>
@@ -2367,7 +2372,7 @@ To apply changes, click <b>Save</b>, then <b>Restart</b>.<br>The settings are wr
         <div class="checkbox-row">
             <label>
                 <input type="checkbox" name="ffmpeg_enabled" value="1" {ffmpeg_checked}>
-                Enable transcoding (FFmpeg 7)
+                Enable transcoding (FFmpeg)
             </label>
         </div>
 

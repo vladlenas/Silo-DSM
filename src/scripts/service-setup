@@ -24,13 +24,23 @@ SCHEMA_FILE="${CONFIG_DIR}/config.schema"
 SILO_CONFIG="${CONFIG_DIR}/config.yaml"
 SILO_BIN="${SYNOPKG_PKGDEST}/bin/silo"
 
-# FFmpeg 7 from SynoCommunity (install_dep_packages in INFO). Silo looks for a
-# binary called "ffmpeg" (and "ffprobe" next to it) in PATH. The ffmpeg7
-# package has exactly these in its bin/ (ffmpeg7/ffprobe7 are links to them),
-# so that folder goes first; it also wins over any ffmpeg DSM itself may have.
-FFMPEG_DIR="${FFMPEG_DIR:-/var/packages/ffmpeg7/target/bin}"
+# FFmpeg from SynoCommunity: ffmpeg8 (install_dep_packages in INFO), or
+# ffmpeg7 when only that one is installed. Silo looks for a binary called
+# "ffmpeg" (and "ffprobe" next to it) in PATH. These packages have exactly
+# these in their bin/ (ffmpeg8/ffprobe8 are links to them), so that folder goes
+# first; it also wins over any ffmpeg DSM itself may have. The Helper gets the
+# same folder through FFMPEG_DIR. FFMPEG_CANDIDATES can be set by the tests.
+if [ -z "${FFMPEG_DIR}" ]; then
+    for _dir in ${FFMPEG_CANDIDATES:-/var/packages/ffmpeg8/target/bin /var/packages/ffmpeg7/target/bin}; do
+        [ -z "${FFMPEG_DIR}" ] && FFMPEG_DIR="${_dir}"
+        if [ -x "${_dir}/ffmpeg" ]; then
+            FFMPEG_DIR="${_dir}"
+            break
+        fi
+    done
+fi
 PATH="${FFMPEG_DIR}:${PATH:-/usr/bin:/bin}"
-export PATH
+export PATH FFMPEG_DIR
 
 # service_log SOURCE MESSAGE: one dated line in the package log.
 service_log()
@@ -121,7 +131,7 @@ service_prestart()
     cd "${CONFIG_DIR}" 2>/dev/null || service_log service "Warning: cannot change to ${CONFIG_DIR}"
 
     if [ ! -x "${FFMPEG_DIR}/ffmpeg" ]; then
-        service_log service "Warning: FFmpeg 7 was not found in ${FFMPEG_DIR}; transcoding is not available. Install the FFmpeg 7 package from SynoCommunity."
+        service_log service "Warning: FFmpeg was not found in ${FFMPEG_DIR}; transcoding is not available. Install the FFmpeg 8 package from SynoCommunity."
     fi
 
     if [ -d "${SYNOPKG_PKGDEST}/ui" ]; then

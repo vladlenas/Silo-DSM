@@ -37,7 +37,7 @@ esac
 # beta="yes": Silo is an early rewrite. DSM 7 hides beta packages in the normal
 # Package Center channel, so the package is distributed through SSpkS.
 #
-# install_dep_packages: FFmpeg 7 from SynoCommunity provides ffmpeg/ffprobe for
+# install_dep_packages: FFmpeg 8 from SynoCommunity provides ffmpeg/ffprobe for
 # transcoding (and pulls in synocli-videodriver for VAAPI on Intel). The
 # SynoCommunity package source must be added in Package Center.
 cat <<EOF
@@ -48,7 +48,7 @@ dsmappname="SYNO.SDS.TorrServerSilo.Application"
 arch="${PLATFORMS}"
 os_min_ver="${OS_MIN_VER}"
 beta="yes"
-install_dep_packages="ffmpeg7"
+install_dep_packages="ffmpeg8"
 dsmuidir="ui"
 startable="yes"
 instuninst_restart_services="nginx.service"

@@ -17,7 +17,7 @@
   "Detailed (debug)": "Detailed (debug)",
   "Device must be a node in /dev/dri, for example /dev/dri/renderD128": "Device must be a node in /dev/dri, for example /dev/dri/renderD128",
   "Disabled": "Disabled",
-  "Enable transcoding (FFmpeg 7)": "Enable transcoding (FFmpeg 7)",
+  "Enable transcoding (FFmpeg)": "Enable transcoding (FFmpeg)",
   "Enabled": "Enabled",
   "Errors only": "Errors only",
   "FFmpeg threads": "FFmpeg threads",

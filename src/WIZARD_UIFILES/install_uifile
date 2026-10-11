@@ -21,10 +21,10 @@
     }]
   }]
 }, {
-  "step_title": "Transcoding (FFmpeg 7)",
+  "step_title": "Transcoding (FFmpeg 8)",
   "items": [{
     "type": "multiselect",
-    "desc": "FFmpeg 7 from SynoCommunity is installed with this package. Silo uses it to transcode video that a player cannot play directly.",
+    "desc": "FFmpeg 8 from SynoCommunity is installed with this package. Silo uses it to transcode video that a player cannot play directly.",
     "subitems": [{
       "key": "wizard_ffmpeg_enabled",
       "desc": "Enable transcoding",

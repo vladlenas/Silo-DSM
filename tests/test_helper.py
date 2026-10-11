@@ -41,7 +41,7 @@ esac
 LANGS = ("ru", "uk", "lt", "pl")
 # Names and values that stay as they are in every language.
 NOT_TRANSLATED = {
-    "CPU", "DSM", "FFmpeg 7", "Silo", "TorrServer Silo", "VAAPI (Intel)", "Silo.log",
+    "CPU", "DSM", "FFmpeg", "Silo", "TorrServer Silo", "VAAPI (Intel)", "Silo.log",
     "English", "Русский", "Lietuvių", "Polski", "Українська",
 }
 

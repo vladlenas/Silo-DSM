@@ -17,7 +17,7 @@
   "Detailed (debug)": "Докладний (debug)",
   "Device must be a node in /dev/dri, for example /dev/dri/renderD128": "Пристрій має бути в /dev/dri, наприклад /dev/dri/renderD128",
   "Disabled": "Вимкнено",
-  "Enable transcoding (FFmpeg 7)": "Увімкнути транскодування (FFmpeg 7)",
+  "Enable transcoding (FFmpeg)": "Увімкнути транскодування (FFmpeg)",
   "Enabled": "Увімкнено",
   "Errors only": "Лише помилки",
   "FFmpeg threads": "Потоки FFmpeg",
