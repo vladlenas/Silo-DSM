@@ -39,9 +39,6 @@ jobs:
           node --check src/ui/Silo.js
           node tests/test_ui.js
 
-      - name: WebDAV plugin syntax
-        run: node --check plugins/silo-webdav/service.js
-
       - name: Package script tests
         run: sh tests/test_scripts.sh
 

@@ -28,7 +28,7 @@ cp "$ROOT/src/ui/Silo.sc" "$SYNOPKG_PKGDEST/ui/"
 # Fake Silo: records the PATH and config it got, then waits.
 cat > "$SYNOPKG_PKGDEST/bin/silo" <<'EOF'
 #!/bin/sh
-echo "fake silo $* PATH=$PATH"
+echo "fake silo $* PATH=$PATH cwd=$(pwd)"
 trap 'exit 0' TERM
 while :; do sleep 1; done
 EOF
@@ -77,6 +77,7 @@ check "silo alive"                           alive "$SILO"
 check "status says running"                  sh "$SSS" status
 check "silo got its config"                  grep -q "fake silo -c $SYNOPKG_PKGVAR/config.yaml" "$SYNOPKG_PKGVAR/Silo.log"
 check "silo got ffmpeg7 first in PATH"       grep -q "PATH=$FFMPEG_DIR:" "$SYNOPKG_PKGVAR/Silo.log"
+check "silo runs in the package var folder"  grep -q "cwd=$SYNOPKG_PKGVAR\$" "$SYNOPKG_PKGVAR/Silo.log"
 check "firewall port follows settings"       grep -q 'dst.ports="8130/tcp"' "$SYNOPKG_PKGDEST/ui/Silo.sc"
 
 echo "== restart (as the Helper does it)"

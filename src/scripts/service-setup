@@ -109,10 +109,16 @@ write_silo_config()
     return ${_rc}
 }
 
-# Called by start-stop-status and restart-silo right before Silo is started.
+# Called by start-stop-status and restart-silo right before Silo is started
+# (in the same shell, so the folder change below applies to Silo).
 service_prestart()
 {
     write_silo_config
+
+    # Silo's working folder. Relative paths of Silo's own settings end up
+    # here, notably the disk cache folder ("torrents" by default), which
+    # would otherwise depend on where DSM happened to run the script.
+    cd "${CONFIG_DIR}" 2>/dev/null || service_log service "Warning: cannot change to ${CONFIG_DIR}"
 
     if [ ! -x "${FFMPEG_DIR}/ffmpeg" ]; then
         service_log service "Warning: FFmpeg 7 was not found in ${FFMPEG_DIR}; transcoding is not available. Install the FFmpeg 7 package from SynoCommunity."

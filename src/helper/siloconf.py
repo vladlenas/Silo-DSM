@@ -56,10 +56,6 @@ HWACCEL_METHODS = ("none", "vaapi", "auto")
 DEFAULTS = {
     "port": DEFAULT_PORT,
     "data_dir": "",
-    "cache_size_mb": 200,
-    "peers_limit": 200,
-    "download_rate_kb": 0,
-    "upload_rate_kb": 0,
     "log_level": "info",
     "owner_password": "",
     "ffmpeg_enabled": True,
@@ -73,10 +69,6 @@ DEFAULTS = {
 # name -> (minimum, maximum) for the integer settings.
 INT_RANGES = {
     "port": (1024, 65535),
-    "cache_size_mb": (16, 65536),
-    "peers_limit": (10, 5000),
-    "download_rate_kb": (0, 10 * 1024 * 1024),
-    "upload_rate_kb": (0, 10 * 1024 * 1024),
     "ffmpeg_threads": (0, 64),
     "ffmpeg_max_sessions": (0, 32),
 }
@@ -281,12 +273,9 @@ def render_yaml(settings, var=None):
         ("plugins", [
             ("dir", os.path.join(var, PLUGINS_SUBDIR)),
         ]),
-        ("torrent", [
-            ("cache_size_mb", settings["cache_size_mb"]),
-            ("peers_limit", settings["peers_limit"]),
-            ("download_rate_kb", settings["download_rate_kb"]),
-            ("upload_rate_kb", settings["upload_rate_kb"]),
-        ]),
+        # No "torrent" section: Silo.1 does not read it. The torrent engine
+        # (RAM/disk cache, its size, peers, speed limits) is configured in
+        # Silo's own web interface and stored in its database.
         # No log file: Silo writes every line to stdout as well, and the
         # package sends stdout to Silo.log. A file here would double each line.
         ("logging", [

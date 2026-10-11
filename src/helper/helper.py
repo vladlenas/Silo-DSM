@@ -966,8 +966,7 @@ def is_port_in_use(port_number, allowed_ports=None):
 # Form field -> settings key. Checkboxes are missing from a form post when they
 # are off, so they are handled separately.
 FORM_FIELDS = (
-    "port", "data_dir", "cache_size_mb", "peers_limit", "download_rate_kb",
-    "upload_rate_kb", "log_level", "ffmpeg_hwaccel", "ffmpeg_hw_device",
+    "port", "data_dir", "log_level", "ffmpeg_hwaccel", "ffmpeg_hw_device",
     "ffmpeg_threads", "ffmpeg_max_sessions", "ffmpeg_cache_dir",
 )
 
@@ -1265,6 +1264,12 @@ button.danger:disabled,
     max-width: 100%;
     overflow-x: auto;
     white-space: pre-wrap;
+}}
+
+.card-note {{
+    margin: 0 0 12px;
+    color: #30415e;
+    line-height: 1.5;
 }}
 
 .path-picker {{
@@ -2344,26 +2349,10 @@ To apply changes, click <b>Save</b>, then <b>Restart</b>.<br>The settings are wr
     </div>
     <div class="settings-card-body">
 
-        <div class="form-row">
-            <label for="cacheSize">Cache size in RAM (MB)</label>
-            <input id="cacheSize" type="number" name="cache_size_mb" min="16" max="65536" value="{cache_size_mb}">
+        <p class="card-note">The torrent engine (RAM or disk cache, cache size, peers, speed limits) is set in Silo's own web interface, in its settings. Silo keeps these settings in its database, so they are not changed here.</p>
+        <div>
+            <a class="button secondary" id="siloSettingsLink" href="#" target="_blank" rel="noopener noreferrer">Open Silo ↗</a>
         </div>
-
-        <div class="form-row">
-            <label for="peersLimit">Peer limit</label>
-            <input id="peersLimit" type="number" name="peers_limit" min="10" max="5000" value="{peers_limit}">
-        </div>
-
-        <div class="form-row">
-            <label for="downloadRate">Download limit (KB/s)</label>
-            <input id="downloadRate" type="number" name="download_rate_kb" min="0" value="{download_rate_kb}">
-        </div>
-
-        <div class="form-row">
-            <label for="uploadRate">Upload limit (KB/s)</label>
-            <input id="uploadRate" type="number" name="upload_rate_kb" min="0" value="{upload_rate_kb}">
-        </div>
-        <div class="help">0 means no limit.</div>
 
     </div>
 </div>
@@ -2448,6 +2437,11 @@ passwordField.addEventListener('blur', function() {{
 }});
 
 toggleAuth();
+
+var siloLink = document.getElementById('siloSettingsLink');
+if (siloLink) {{
+    siloLink.href = 'http://' + window.location.hostname + ':{port}/';
+}}
 </script>
 """.format(
         port=settings["port"],
@@ -2457,10 +2451,6 @@ toggleAuth();
         auth_checked="checked" if password else "",
         auth_disabled="" if password else "disabled",
         password=html.escape(PASSWORD_PLACEHOLDER if password else "", quote=True),
-        cache_size_mb=settings["cache_size_mb"],
-        peers_limit=settings["peers_limit"],
-        download_rate_kb=settings["download_rate_kb"],
-        upload_rate_kb=settings["upload_rate_kb"],
         ffmpeg_checked="checked" if settings["ffmpeg_enabled"] else "",
         hwaccel_options=option_list(siloconf.HWACCEL_METHODS, HWACCEL_LABELS, settings["ffmpeg_hwaccel"]),
         hw_device=html.escape(settings["ffmpeg_hw_device"], quote=True),

@@ -3,6 +3,29 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## 0.3.1 (2026-10-11)
+
+Silo stays at `Silo.1` (commit `fc5795e`).
+
+### Fixed
+
+- **Torrent settings in the Helper did nothing.** Cache size, peer limit and
+  speed limits were written to the `torrent:` section of `config.yaml`, but
+  Silo.1 does not read that section: its torrent engine keeps its settings in
+  its own database and they are changed in Silo's web interface. The fields
+  are gone from the Helper and from `config.yaml`; the Settings page now says
+  where these settings are. Old values in `settings.json` are ignored.
+- **Silo's working folder** is now the package folder
+  (`/var/packages/TorrServerSilo/var`), so a relative disk-cache folder (Silo's
+  default is `torrents`) is created there and not wherever DSM ran the script.
+
+### Removed
+
+- The package's own WebDAV plugin (`silo-webdav`). Silo's plugin store has a
+  WebDAV plugin that works with ViMu; the README explains how to set it up
+  (WebDAV password on the plugin page, address `/plugins/webdav/dav/`).
+  Uninstall `silo-webdav` in Silo's admin panel if you installed it.
+
 ## 0.2.1 (2026-10-11)
 
 Silo stays at `Silo.1` (commit `fc5795e`).

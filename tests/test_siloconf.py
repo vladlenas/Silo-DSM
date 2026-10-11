@@ -51,13 +51,13 @@ class NormalizeTests(Base):
         self.assertEqual(sc.DEFAULTS["port"], 8095)
 
     def test_numbers_from_a_form_are_accepted(self):
-        result = sc.normalize({"port": "8100", "cache_size_mb": " 512 "})
-        self.assertEqual((result["port"], result["cache_size_mb"]), (8100, 512))
+        result = sc.normalize({"port": "8100", "ffmpeg_threads": " 4 "})
+        self.assertEqual((result["port"], result["ffmpeg_threads"]), (8100, 4))
 
     def test_invalid_values_are_rejected(self):
         for raw in (
             {"port": "80"}, {"port": "70000"}, {"port": "8x"}, {"port": True},
-            {"peers_limit": "-1"}, {"log_level": "trace"}, {"ffmpeg_hwaccel": "cuda"},
+            {"ffmpeg_max_sessions": "-1"}, {"log_level": "trace"}, {"ffmpeg_hwaccel": "cuda"},
             {"ffmpeg_hw_device": "/etc/passwd"}, {"data_dir": "/etc"},
             {"data_dir": "/volume1/../etc"}, {"owner_password": "a\nb"},
             {"owner_password": "x" * 129},
@@ -85,10 +85,10 @@ class StorageTests(Base):
 
     def test_a_bad_value_edited_by_hand_falls_back_alone(self):
         with open(sc.settings_path(self.var), "w") as f:
-            json.dump({"port": 1, "peers_limit": 300}, f)
+            json.dump({"port": 1, "ffmpeg_threads": 3}, f)
         loaded = sc.load(self.var)
         self.assertEqual(loaded["port"], 8095)
-        self.assertEqual(loaded["peers_limit"], 300)
+        self.assertEqual(loaded["ffmpeg_threads"], 3)
 
     def test_save_is_private(self):
         sc.save({"owner_password": "secret"}, self.var)
@@ -99,10 +99,21 @@ class YamlTests(Base):
     def test_config_has_every_section_silo_reads(self):
         config = parse_config(sc.render_yaml(sc.DEFAULTS, self.var))
         self.assertEqual(
-            sorted(config), ["auth", "ffmpeg", "logging", "plugins", "server", "storage", "torrent"])
+            sorted(config), ["auth", "ffmpeg", "logging", "plugins", "server", "storage"])
         self.assertEqual(config["server"], {"host": "0.0.0.0", "port": 8095})
         self.assertEqual(config["storage"]["data_dir"], os.path.join(self.var, "data"))
         self.assertEqual(config["plugins"]["dir"], os.path.join(self.var, "plugins"))
+
+    def test_no_torrent_section(self):
+        # Silo.1 does not read it; the engine is set up in Silo itself.
+        self.assertNotIn("torrent:", sc.render_yaml(sc.DEFAULTS, self.var))
+
+    def test_old_settings_with_torrent_keys_still_load(self):
+        with open(sc.settings_path(self.var), "w") as f:
+            json.dump({"port": 8100, "cache_size_mb": 512, "peers_limit": 300}, f)
+        loaded = sc.load(self.var)
+        self.assertEqual(loaded["port"], 8100)
+        self.assertNotIn("cache_size_mb", loaded)
 
     def test_log_goes_to_stdout_only(self):
         # Silo prints every line to stdout too; a file would double the log.
