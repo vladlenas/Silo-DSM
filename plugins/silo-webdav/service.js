@@ -279,6 +279,9 @@ function handleOptions(req, res) {
 //   [WebDAV] PROPFIND /Movies/ depth=1 auth=none ua=ViMu/... -> 207
 function logged(handler) {
     return function(req, res) {
+        // Logged on arrival too: if a request hangs, the log still shows it.
+        console.log("[WebDAV] <- " + req.method + " " + req.path.substring(PREFIX.length) +
+            " from " + String((req.headers || {})["user-agent"] || "-").substring(0, 60));
         var status = 200;
         var realStatus = res.status;
         res.status = function(code) {

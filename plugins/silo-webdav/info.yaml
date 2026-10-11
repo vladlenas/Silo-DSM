@@ -4,7 +4,7 @@
 # URL:  http://<NAS>:<Silo port>/plugins/silo-webdav/library
 id: "silo-webdav"
 name: "WebDAV"
-version: "0.1.2"
+version: "0.1.3"
 author: "vladlenas"
 description: >
   Read-only WebDAV share of the torrent library (categories, torrents, files)
