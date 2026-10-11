@@ -1256,15 +1256,8 @@ button.danger:disabled,
 
 .wide-layout {{
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-}}
-
-@media (max-width: 800px) {{
-    .wide-layout {{
-        grid-template-columns: 1fr;
-    }}
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
 }}
 
 .vaapi-form {{

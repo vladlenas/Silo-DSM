@@ -3,6 +3,13 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## Unreleased
+
+### Changed
+
+- **Status page:** in the Transcoding card the VAAPI test is now below the
+  table, both at full width (the table rows no longer wrap).
+
 ## 0.5.1 (2026-10-11)
 
 Silo stays at `Silo.1` (commit `fc5795e`).
