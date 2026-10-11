@@ -3,6 +3,15 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## Unreleased
+
+### Changed
+
+- **New package icon** in the style of Synology's own icons: the TorrServer DSM
+  server with an orange "SILO" plate (upright bold type, like "SAN" or "VPN"),
+  so the two packages read as one family and differ at a glance. Package
+  Center and DSM window icons (16–256 px); the status page keeps Silo's logo.
+
 ## 0.6.1 (2026-10-11)
 
 Silo stays at `Silo.1` (commit `fc5795e`).
