@@ -256,9 +256,35 @@ function handleOptions(req, res) {
 // Routes
 // ---------------------------------------------------------------
 
-ts.web.route("OPTIONS", "/*", handleOptions);
-ts.web.route("PROPFIND", "/*", handlePropfind);
-ts.web.route("GET", "/*", handleGet);
-ts.web.route("HEAD", "/*", handleGet);
+// Every request is written to the Silo log, so a client that does not work
+// shows exactly what it asked for and what it got:
+//   [WebDAV] PROPFIND /Movies/ depth=1 auth=none ua=ViMu/... -> 207
+function logged(handler) {
+    return function(req, res) {
+        var status = 200;
+        var realStatus = res.status;
+        res.status = function(code) {
+            status = code;
+            return realStatus(code);
+        };
+        try {
+            return handler(req, res);
+        } finally {
+            var h = req.headers || {};
+            var auth = h["authorization"] ? String(h["authorization"]).split(" ")[0] : "none";
+            console.log("[WebDAV] " + req.method + " /" + relPath(req.path) +
+                (h["depth"] !== undefined ? " depth=" + h["depth"] : "") +
+                (h["range"] ? " range=" + h["range"] : "") +
+                " auth=" + auth +
+                " ua=" + String(h["user-agent"] || "-").substring(0, 60) +
+                " -> " + status);
+        }
+    };
+}
+
+ts.web.route("OPTIONS", "/*", logged(handleOptions));
+ts.web.route("PROPFIND", "/*", logged(handlePropfind));
+ts.web.route("GET", "/*", logged(handleGet));
+ts.web.route("HEAD", "/*", logged(handleGet));
 
 console.log("[WebDAV] Library shared at " + PREFIX + "/");

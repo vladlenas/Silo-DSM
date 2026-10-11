@@ -135,6 +135,12 @@ The plugin is not part of the `.spk`; it is a separate file of each release,
      Silo user and their password).
 3. Add torrents in Silo's web interface; they appear in ViMu right away.
 
+The address must end with a slash. Without it Silo answers WebDAV requests
+with a redirect (307), which a browser follows but many WebDAV clients do
+not. Every request the plugin gets is written to `Silo.log`
+(`[WebDAV] PROPFIND / depth=1 … -> 207`), so a client that does not connect
+shows what it asked for.
+
 A quick check in a browser: `http://<NAS address>:8095/plugins/silo-webdav/`
 shows the folders as a plain list.
 
