@@ -1,0 +1,185 @@
+#!/bin/sh
+
+if [ -z "${SYNOPKG_PKGNAME}" ] || [ -z "${SYNOPKG_DSM_VERSION_MAJOR}" ]; then
+    echo "Error: Environment variables are not set." 1>&2
+    echo "Please run this script through synopkg." 1>&2
+    exit 1
+fi
+
+# NOTE: this file is sourced by installer and start-stop-status (including on
+# every "status" poll). Top level must only compute variables. Anything with
+# side effects belongs in a function below.
+
+# Bump when the layout of ${SYNOPKG_PKGVAR} changes; migrate_config() uses it.
+CONFIG_SCHEMA=1
+
+CONFIG_DIR="${SYNOPKG_PKGVAR:-/var/packages/${SYNOPKG_PKGNAME}/var}"
+# One log for everything: Silo's stdout and stderr (it prints every log line
+# there), the start/stop/restart scripts and the Helper. Nothing truncates it;
+# the Helper rotates it by size.
+LOG_FILE="${CONFIG_DIR}/Silo.log"
+PID_FILE="${CONFIG_DIR}/${SYNOPKG_PKGNAME}.pid"
+SCHEMA_FILE="${CONFIG_DIR}/config.schema"
+# Generated from settings.json by helper/siloconf.py before every start.
+SILO_CONFIG="${CONFIG_DIR}/config.yaml"
+SILO_BIN="${SYNOPKG_PKGDEST}/bin/silo"
+
+# FFmpeg 7 from SynoCommunity (install_dep_packages in INFO). Silo looks for a
+# binary called "ffmpeg" (and "ffprobe" next to it) in PATH. The ffmpeg7
+# package has exactly these in its bin/ (ffmpeg7/ffprobe7 are links to them),
+# so that folder goes first; it also wins over any ffmpeg DSM itself may have.
+FFMPEG_DIR="${FFMPEG_DIR:-/var/packages/ffmpeg7/target/bin}"
+PATH="${FFMPEG_DIR}:${PATH:-/usr/bin:/bin}"
+export PATH
+
+# service_log SOURCE MESSAGE: one dated line in the package log.
+service_log()
+{
+    printf '%s %s: %s\n' "$(date -u '+%Y/%m/%d %H:%M:%S UTC0')" "$1" "$2" >> "${LOG_FILE}"
+}
+
+# Python 3 for the Helper and for config.yaml (it needs 3.7 or newer). DSM 7
+# keeps one in the system partition; if it is not there, the Python 3 package
+# from Package Center is used. Only file tests here: this file is sourced on
+# every status poll. PYTHON_CANDIDATES can be set by the tests.
+PYTHON_BIN=""
+# shellcheck disable=SC2086
+for _py in ${PYTHON_CANDIDATES:-/bin/python3 /usr/bin/python3 /usr/local/bin/python3 /var/packages/Python3*/target/usr/bin/python3}; do
+    if [ -x "${_py}" ]; then
+        PYTHON_BIN="${_py}"
+        break
+    fi
+done
+
+SILOCONF="${SYNOPKG_PKGDEST}/helper/siloconf.py"
+HELPER_COMMAND="${PYTHON_BIN:-/bin/python3} ${SYNOPKG_PKGDEST}/helper/helper.py"
+SILO_COMMAND="${SILO_BIN} -c ${SILO_CONFIG}"
+
+# One command per line; the helper must stay first (its pid is the first one
+# in the pid file, and restart-silo keeps it).
+SERVICE_COMMAND="${HELPER_COMMAND}
+${SILO_COMMAND}"
+
+# The web port, read from settings.json (the source of config.yaml).
+silo_port()
+{
+    _port="$(sed -n 's/^[[:space:]]*"port":[[:space:]]*\([0-9][0-9]*\).*/\1/p' "${CONFIG_DIR}/settings.json" 2>/dev/null | head -n 1)"
+    case "${_port}" in
+        ''|*[!0-9]*) echo 8095 ;;
+        *) echo "${_port}" ;;
+    esac
+}
+
+update_firewall_port()
+{
+    sc_file="${SYNOPKG_PKGDEST}/ui/Silo.sc"
+
+    # The helper listens on 127.0.0.1 only (reached through DSM nginx), so its
+    # port is intentionally not exposed here.
+    new_content="[torrserver-silo]
+title=\"TorrServer Silo\"
+desc=\"TorrServer Silo\"
+port_forward=\"yes\"
+dst.ports=\"$(silo_port)/tcp\""
+
+    if [ "$(cat "${sc_file}" 2>/dev/null)" = "${new_content}" ]; then
+        return 0
+    fi
+
+    printf '%s\n' "${new_content}" > "${sc_file}" 2>/dev/null || return 0
+    /usr/syno/sbin/synopkghelper update "${SYNOPKG_PKGNAME}" port-config >/dev/null 2>&1
+}
+
+# Writes config.yaml from settings.json. A failure is logged; the previous
+# config.yaml (if any) stays, so Silo still starts.
+write_silo_config()
+{
+    if [ -z "${PYTHON_BIN}" ]; then
+        service_log service "ERROR: Python 3 was not found, config.yaml cannot be written. Install Python 3 from DSM Package Center, then restart the package."
+        return 1
+    fi
+
+    _out="$("${PYTHON_BIN}" "${SILOCONF}" write 2>&1)"
+    _rc=$?
+    if [ -n "${_out}" ]; then
+        printf '%s\n' "${_out}" | while IFS= read -r _line; do
+            service_log siloconf "${_line}"
+        done
+    fi
+    return ${_rc}
+}
+
+# Called by start-stop-status and restart-silo right before Silo is started.
+service_prestart()
+{
+    write_silo_config
+
+    if [ ! -x "${FFMPEG_DIR}/ffmpeg" ]; then
+        service_log service "Warning: FFmpeg 7 was not found in ${FFMPEG_DIR}; transcoding is not available. Install the FFmpeg 7 package from SynoCommunity."
+    fi
+
+    if [ -d "${SYNOPKG_PKGDEST}/ui" ]; then
+        update_firewall_port
+    fi
+}
+
+remove_var_file()
+{
+    rm -f -- "${SYNOPKG_PKGVAR}/$1"
+}
+
+# Wizard answers -> settings.json (first install only), then config.yaml.
+# stdout is shown in the Package Center dialog.
+init_settings()
+{
+    if [ -z "${PYTHON_BIN}" ]; then
+        return 0
+    fi
+    "${PYTHON_BIN}" "${SILOCONF}" init
+}
+
+migrate_config()
+{
+    if [ -z "${SYNOPKG_PKGVAR}" ] || [ ! -d "${SYNOPKG_PKGVAR}" ]; then
+        return 0
+    fi
+
+    if [ "${wizard_reset_settings}" = "true" ]; then
+        echo "Resetting package settings (requested in the upgrade wizard)"
+        remove_var_file settings.json
+        remove_var_file helper.language
+    fi
+
+    previous="$(cat "${SCHEMA_FILE}" 2>/dev/null)"
+    case "${previous}" in
+        ''|*[!0-9]*) previous=0 ;;
+    esac
+
+    if [ "${previous}" -lt "${CONFIG_SCHEMA}" ]; then
+        echo "Migrating configuration schema ${previous} -> ${CONFIG_SCHEMA}"
+        # A pid file surviving an upgrade is always stale (service is stopped).
+        remove_var_file "${SYNOPKG_PKGNAME}.pid"
+    fi
+
+    # Leftovers from interrupted writes.
+    find "${SYNOPKG_PKGVAR}" -maxdepth 1 -type f \
+        \( -name '*.tmp' -o -name '*.stage' \) -exec rm -f -- {} \; 2>/dev/null
+
+    printf '%s\n' "${CONFIG_SCHEMA}" > "${SCHEMA_FILE}"
+}
+
+service_postinst()
+{
+    # DSM runs postinst for installs AND for upgrades, before postupgrade.
+    migrate_config
+    init_settings
+}
+
+service_postupgrade()
+{
+    # Repeats the migration (it is idempotent) so the "reset settings" option
+    # of the upgrade wizard is always honoured.
+    migrate_config
+    init_settings
+    return 0
+}

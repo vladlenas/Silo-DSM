@@ -1,0 +1,16 @@
+{
+    "port-config": {
+        "protocol-file": "ui/Silo.sc"
+    },
+    "video-driver": {},
+    "web-config": {
+        "nginx-static-config": {
+            "enable": [
+                {
+                    "type": "dsm",
+                    "relpath": "nginx/Silo.conf"
+                }
+            ]
+        }
+    }
+}

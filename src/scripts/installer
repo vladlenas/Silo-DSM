@@ -1,0 +1,133 @@
+#!/bin/sh
+
+# DSM 7.3 or newer only. The package ships no var/ or config/ folder: its
+# settings are created in postinst from the install wizard answers.
+
+install_log ()
+{
+    local _msg_="$@"
+    if [ -z "${_msg_}" ]; then
+        # read multiline from stdin
+        while IFS=$'\n' read -r line; do
+            install_log "${line}"
+        done
+    else
+        # stderr goes to /var/log/packages/{package}.log
+        # stdout goes to dialog in package manager ui.
+        echo -e "$(date +'%Y/%m/%d %H:%M:%S')\t${_msg_}" 1>&2
+    fi
+}
+
+# Invoke shell function if available
+call_func ()
+{
+    FUNC=$1
+    if type "${FUNC}" 2>/dev/null | grep -q 'function' 2>/dev/null; then
+        install_log "Begin ${FUNC}"
+        LOG=$2
+        ARG=$3
+        if [ -z "${LOG}" ]; then
+            if [ -z "${ARG}" ]; then
+                eval ${FUNC}
+            else
+                eval ${FUNC} ${ARG}
+            fi
+        else
+            if [ -z "${ARG}" ]; then
+                eval ${FUNC} 2>&1 | ${LOG}
+            else
+                eval ${FUNC} ${ARG} 2>&1 | ${LOG}
+            fi
+        fi
+        install_log "End ${FUNC}"
+    fi
+}
+
+# Source installer variables and functions
+INST_FUNCTIONS=$(dirname $0)"/functions"
+if [ -r "${INST_FUNCTIONS}" ]; then
+    . "${INST_FUNCTIONS}"
+fi
+
+
+# Source package specific variables and functions
+SVC_SETUP=$(dirname $0)"/service-setup"
+if [ -r "${SVC_SETUP}" ]; then
+    . "${SVC_SETUP}"
+fi
+
+
+### Generic package behaviors
+
+preinst ()
+{
+    log_step "preinst"
+
+    # The Helper (the settings window) and the config.yaml generator are
+    # written in Python 3. DSM 7 normally includes it; without it the package
+    # could not be set up. stdout is shown in the Package Center dialog.
+    if [ -z "${PYTHON_BIN}" ]; then
+        echo "Python 3 was not found, and TorrServer Silo needs it for its settings window and its config.yaml."
+        echo "Install the Python 3 package from DSM Package Center, then install TorrServer Silo again."
+        install_log "ERROR: Python 3 was not found"
+        exit 1
+    fi
+
+    exit 0
+}
+
+postinst ()
+{
+    log_step "postinst"
+
+    # settings.json from the install wizard answers, then config.yaml.
+    call_func "service_postinst" install_log
+
+    exit 0
+}
+
+preuninst ()
+{
+    log_step "preuninst"
+    exit 0
+}
+
+postuninst ()
+{
+    log_step "postuninst"
+
+    if [ "$wizard_delete_data" = "true" ]; then
+        echo "Removing files..." | install_log
+        if [ -d "${SYNOPKG_PKGHOME}" ] && [ "$(ls -A "${SYNOPKG_PKGHOME}" 2>/dev/null)" ]; then
+            find "${SYNOPKG_PKGHOME}" -mindepth 1 -delete -print | install_log
+        fi
+
+        if [ -d "${SYNOPKG_PKGVAR}" ] && [ "$(ls -A "${SYNOPKG_PKGVAR}" 2>/dev/null)" ]; then
+            find "${SYNOPKG_PKGVAR}" -mindepth 1 -delete -print | install_log
+        fi
+
+        ETC_DIR="/var/packages/${SYNOPKG_PKGNAME}/etc"
+        if [ -d "${ETC_DIR}" ] && [ "$(ls -A "${ETC_DIR}" 2>/dev/null)" ]; then
+            find "${ETC_DIR}" -mindepth 1 -delete -print | install_log
+        fi
+    fi
+    exit 0
+}
+
+preupgrade ()
+{
+    log_step "preupgrade"
+    exit 0
+}
+
+postupgrade ()
+{
+    log_step "postupgrade"
+
+    # DSM runs postinst before postupgrade; service_postinst already migrated
+    # the configuration. This hook only repeats it (it is idempotent) so that
+    # the "reset settings" option of the upgrade wizard is always honoured.
+    call_func "service_postupgrade" install_log
+
+    exit 0
+}

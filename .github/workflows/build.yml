@@ -1,0 +1,148 @@
+name: Build Silo DSM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
+  check-version:
+    name: Check package version
+    runs-on: ubuntu-latest
+
+    outputs:
+      version_changed: ${{ steps.check.outputs.version_changed }}
+      version: ${{ steps.check.outputs.version }}
+      silo_version: ${{ steps.check.outputs.silo_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          # The previous commit of a multi-commit push can be arbitrarily
+          # far back, so the full history is needed to read the old Makefile.
+          fetch-depth: 0
+
+      - name: Check PKG_VERSION change
+        id: check
+        run: |
+          read_var() { sed -n "s/^$1[[:space:]]*:=[[:space:]]*//p" "${2:-Makefile}" | head -1 | xargs; }
+
+          NEW_VERSION="$(read_var PKG_VERSION)"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "silo_version=$(read_var SILO_VERSION)" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual workflow run"
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git show "${{ github.event.before }}:Makefile" > old.mk 2>/dev/null || : > old.mk
+          OLD_VERSION="$(read_var PKG_VERSION old.mk)"
+
+          echo "Previous version: $OLD_VERSION"
+          echo "Current version:  $NEW_VERSION"
+
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build SPK packages
+    needs:
+      - check-version
+      - test
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Silo needs Go 1.26 (go.mod of the silo branch).
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.x'
+          cache: false
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xz-utils
+
+      - name: Build SPK packages
+        env:
+          GOTOOLCHAIN: local
+        run: make
+
+      - name: Checksums
+        run: |
+          cd spk
+          sha256sum *.spk > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload SPK packages as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Silo-DSM-${{ needs.check-version.outputs.version }}
+          path: |
+            spk/*.spk
+            spk/SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs:
+      - check-version
+      - build
+    if: |
+      github.event_name == 'push' &&
+      needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download built SPK packages
+        uses: actions/download-artifact@v8
+        with:
+          name: Silo-DSM-${{ needs.check-version.outputs.version }}
+          path: spk
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check-version.outputs.version }}
+          SILO_VERSION: ${{ needs.check-version.outputs.silo_version }}
+        run: |
+          # Release notes come from CHANGELOG.md when its top entry is for this
+          # version; otherwise fall back to GitHub's generated notes.
+          sh .github/scripts/release-notes.sh "${VERSION}" CHANGELOG.md > notes.md || true
+
+          if [ -s notes.md ]; then
+            NOTES="--notes-file notes.md"
+          else
+            NOTES="--generate-notes"
+            echo "::warning::No CHANGELOG.md entry for ${VERSION}; using generated notes"
+          fi
+
+          # Silo is early development: every release is a pre-release, and
+          # the packages carry beta="yes" (distributed through SSpkS).
+          gh release create "v${VERSION}" \
+            spk/*.spk spk/SHA256SUMS \
+            --prerelease \
+            --title "Silo DSM v${VERSION} (${SILO_VERSION})" \
+            ${NOTES}

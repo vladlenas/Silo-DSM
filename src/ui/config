@@ -1,0 +1,31 @@
+{
+    "Silo.js": {
+        "SYNO.SDS.TorrServerSilo.Application": {
+            "type": "app",
+            "title": "TorrServer Silo",
+            "appWindow": "SYNO.SDS.TorrServerSilo.MainWindow",
+            "desc": "TorrServer Silo",
+            "icon": "images/silo-{0}.png",
+            "allowMultiInstance": false,
+            "allowStandalone": true,
+            "allowSharing": true,
+            "allUsers": true,
+            "grantPrivilege": "all",
+            "advanceGrantPrivilege": true,
+            "depend": [
+                "SYNO.SDS.TorrServerSilo.MainWindow"
+            ]
+        },
+
+        "SYNO.SDS.TorrServerSilo.MainWindow": {
+            "type": "lib",
+            "title": "TorrServer Silo",
+            "icon": "images/silo-{0}.png",
+            "depend": [
+                "SYNO.SDS.TorrServerSilo.Utils"
+            ]
+        },
+
+        "SYNO.SDS.TorrServerSilo.Utils": []
+    }
+}

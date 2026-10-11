@@ -1,0 +1,132 @@
+#!/bin/sh
+#
+# Restarts only the Silo process. Runs as the package user (no root, no sudo):
+# the helper that started this script keeps running and keeps its pid.
+# config.yaml is written again from settings.json first, so every changed
+# setting takes effect.
+#
+# Environment: normally inherited from the helper (which DSM started with the
+# SYNOPKG_* variables); the defaults below cover a manual run.
+
+: "${SYNOPKG_PKGNAME:=TorrServerSilo}"
+: "${SYNOPKG_DSM_VERSION_MAJOR:=7}"
+: "${SYNOPKG_PKGDEST:=/var/packages/${SYNOPKG_PKGNAME}/target}"
+: "${SYNOPKG_PKGVAR:=/var/packages/${SYNOPKG_PKGNAME}/var}"
+export SYNOPKG_PKGNAME SYNOPKG_DSM_VERSION_MAJOR SYNOPKG_PKGDEST SYNOPKG_PKGVAR
+
+# shellcheck disable=SC1091
+. "$(dirname "$0")/service-setup" || exit 1
+
+# How long Silo gets to shut down cleanly before it is killed. Not taken
+# from SVC_WAIT_TIMEOUT: DSM may pass a short value for its own stop handling.
+STOP_TIMEOUT="${RESTART_STOP_TIMEOUT:-20}"
+LOCK_DIR="${CONFIG_DIR}/restart.lock"
+
+log()
+{
+    service_log restart-silo "$1"
+}
+
+# A killed process whose parent has not reaped it yet is a zombie.
+alive()
+{
+    kill -0 "$1" 2>/dev/null || return 1
+    ! grep -q '^State:[[:space:]]*Z' "/proc/$1/status" 2>/dev/null
+}
+
+# Pids of running Silo binaries of this package (found by their command line,
+# so a missing or stale pid file does not matter).
+silo_pids()
+{
+    for _cmdline in /proc/[0-9]*/cmdline; do
+        # The binary is the first word; for a script it is the second
+        # (after the interpreter).
+        _words="$(tr '\0' '\n' < "${_cmdline}" 2>/dev/null | head -n 2)"
+        case "
+${_words}
+" in
+            *"
+${SILO_BIN}
+"*)
+                _pid="${_cmdline#/proc/}"
+                echo "${_pid%/cmdline}"
+                ;;
+        esac
+    done
+}
+
+acquire_lock()
+{
+    if mkdir "${LOCK_DIR}" 2>/dev/null; then
+        echo "$$" > "${LOCK_DIR}/pid"
+        return 0
+    fi
+
+    _owner="$(cat "${LOCK_DIR}/pid" 2>/dev/null)"
+    if [ -n "${_owner}" ] && alive "${_owner}"; then
+        return 1
+    fi
+
+    # The previous restart died without cleaning up.
+    rm -rf "${LOCK_DIR}"
+    mkdir "${LOCK_DIR}" 2>/dev/null || return 1
+    echo "$$" > "${LOCK_DIR}/pid"
+}
+
+if ! acquire_lock; then
+    log "another restart is already running"
+    exit 0
+fi
+trap 'rm -rf "${LOCK_DIR}"' EXIT
+
+# The helper's own pid: given by the helper, otherwise first in the pid file.
+HELPER_PID="${SILO_HELPER_PID}"
+if [ -z "${HELPER_PID}" ]; then
+    set -- $(cat "${PID_FILE}" 2>/dev/null)
+    HELPER_PID="$1"
+fi
+case "${HELPER_PID}" in
+    ''|*[!0-9]*)
+        log "ERROR: the helper pid is unknown, is the package running?"
+        exit 1
+        ;;
+esac
+
+log "stopping Silo"
+OLD_PIDS="$(silo_pids)"
+for pid in ${OLD_PIDS}; do
+    kill -TERM "${pid}" 2>/dev/null
+done
+
+waited=0
+for pid in ${OLD_PIDS}; do
+    while alive "${pid}" && [ "${waited}" -lt "${STOP_TIMEOUT}" ]; do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    if alive "${pid}"; then
+        log "Silo ${pid} ignored SIGTERM, sending SIGKILL"
+        kill -KILL "${pid}" 2>/dev/null
+        sleep 1
+    fi
+done
+
+service_prestart >> "${LOG_FILE}" 2>&1
+
+log "starting Silo"
+# The command line is split into words on purpose.
+# shellcheck disable=SC2086
+${SILO_COMMAND} < /dev/null >> "${LOG_FILE}" 2>&1 &
+NEW_PID=$!
+
+# Replace the pid file in one step: DSM reads it to see whether the package runs.
+printf '%s %s' "${HELPER_PID}" "${NEW_PID}" > "${PID_FILE}.new" && mv -f "${PID_FILE}.new" "${PID_FILE}"
+
+sleep 1
+if ! alive "${NEW_PID}"; then
+    log "ERROR: Silo exited right after the start, see Silo.log"
+    exit 1
+fi
+
+log "Silo restarted (pid ${NEW_PID})"
+exit 0

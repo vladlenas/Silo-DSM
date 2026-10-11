@@ -1,0 +1,7 @@
+spk/
+dest_bin/
+dest_src/
+build/
+__pycache__/
+*.pyc
+src/helper/VERSION

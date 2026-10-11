@@ -1,0 +1,12 @@
+[{
+  "step_title": "Upgrade TorrServer Silo",
+  "items": [{
+    "type": "multiselect",
+    "desc": "Your settings are kept by default. config.yaml is generated again from them after the upgrade.",
+    "subitems": [{
+      "key": "wizard_reset_settings",
+      "desc": "<b style=\"color: red\">Reset package settings to defaults</b> (port, password, data folder, transcoding). Torrents and Silo's database are kept.",
+      "defaultValue": false
+    }]
+  }]
+}]

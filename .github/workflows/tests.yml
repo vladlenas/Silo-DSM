@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+  # Called from build.yml so a release is never built from a failing tree.
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Unit tests and script checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Syntax check (shell, Python, JSON)
+        run: |
+          for f in src/scripts/* .github/scripts/*.sh tests/test_scripts.sh; do dash -n "$f"; done
+          bash -n build-package.sh
+          bash -n src/INFO.sh
+          bash -n tests/test_build.sh
+          python3 -m py_compile src/helper/helper.py src/helper/siloconf.py
+          for f in src/conf/* src/ui/config src/WIZARD_UIFILES/* src/helper/locales/*.json; do
+            python3 -m json.tool "$f" > /dev/null || { echo "invalid JSON: $f"; exit 1; }
+          done
+
+      - name: Helper and config.yaml unit tests
+        run: python3 -W error::ResourceWarning -m unittest discover -s tests -v
+
+      - name: Desktop app (JS) tests
+        run: |
+          node --check src/ui/Silo.js
+          node tests/test_ui.js
+
+      - name: Package script tests
+        run: sh tests/test_scripts.sh
+
+      - name: Build script tests
+        run: bash tests/test_build.sh
+
+      - name: ShellCheck (informational)
+        continue-on-error: true
+        run: |
+          shellcheck --severity=warning src/scripts/* build-package.sh src/INFO.sh

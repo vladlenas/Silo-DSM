@@ -1,0 +1,50 @@
+[{
+  "step_title": "TorrServer Silo",
+  "items": [{
+    "type": "textfield",
+    "desc": "Silo is an early rewrite of TorrServer: expect things to break. It runs next to TorrServer DSM on its own port (TorrServer DSM uses 8090). All settings can be changed later in the package window.",
+    "subitems": [{
+      "key": "wizard_port",
+      "desc": "Web port",
+      "defaultValue": "8095",
+      "validator": {
+        "fn": "{var v=String(arguments[0]);if(!/^[0-9]{4,5}$/.test(v)){return 'Enter a number from 1024 to 65535';}var n=parseInt(v,10);if(n<1024||n>65535){return 'Enter a number from 1024 to 65535';}if(n===42778){return 'Port 42778 is used by the package window';}return true;}"
+      }
+    }]
+  }, {
+    "type": "password",
+    "desc": "Owner password. Leave it empty to run Silo without a login (anyone on your network can use it).",
+    "subitems": [{
+      "key": "wizard_owner_password",
+      "desc": "Password",
+      "defaultValue": ""
+    }]
+  }]
+}, {
+  "step_title": "Transcoding (FFmpeg 7)",
+  "items": [{
+    "type": "multiselect",
+    "desc": "FFmpeg 7 from SynoCommunity is installed with this package. Silo uses it to transcode video that a player cannot play directly.",
+    "subitems": [{
+      "key": "wizard_ffmpeg_enabled",
+      "desc": "Enable transcoding",
+      "defaultValue": true
+    }]
+  }, {
+    "type": "singleselect",
+    "desc": "Hardware acceleration. VAAPI needs an Intel CPU with integrated graphics (/dev/dri). The package window has a button that tests it.",
+    "subitems": [{
+      "key": "wizard_hwaccel_none",
+      "desc": "None (CPU only)",
+      "defaultValue": true
+    }, {
+      "key": "wizard_hwaccel_vaapi",
+      "desc": "VAAPI (Intel)",
+      "defaultValue": false
+    }, {
+      "key": "wizard_hwaccel_auto",
+      "desc": "Automatic (Silo picks what works)",
+      "defaultValue": false
+    }]
+  }]
+}]
