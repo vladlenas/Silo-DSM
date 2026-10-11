@@ -10,8 +10,7 @@ First beta. Silo `Silo.1` (commit `fc5795e`).
 ### Added
 
 - DSM 7 package for TorrServer Silo, built like TorrServer DSM: `.spk` for
-  `amd64`, `arm64` and `arm7`, `run-as: package`, Helper behind DSM nginx,
-  release workflow.
+  `amd64`, `run-as: package`, Helper behind DSM nginx, release workflow.
 - Silo compiled from a pinned commit of the TorrServer `silo` branch with Go
   1.26 (flags of upstream `build-all.sh`).
 - `config.yaml` generated from the install wizard and the Helper (port, data
@@ -24,3 +23,6 @@ First beta. Silo `Silo.1` (commit `fc5795e`).
 - GPU access for VAAPI (`video-driver` resource) and a **Test VAAPI** button
   with `/dev/dri` details on the Helper status page.
 - `beta="yes"`: distributed through SSpkS; GitHub releases are pre-releases.
+- **silo-webdav** plugin 0.1.0 (separate zip in the release): the torrent
+  library as a read-only WebDAV share for players such as ViMu, with seeking
+  and optional Basic login checked by Silo.

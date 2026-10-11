@@ -1,0 +1,16 @@
+# WebDAV access to the Silo torrent library (read only), for players that can
+# browse a WebDAV share, such as ViMu on Android TV.
+#
+# URL:  http://<NAS>:<Silo port>/plugins/silo-webdav/
+id: "silo-webdav"
+name: "WebDAV"
+version: "0.1.0"
+author: "vladlenas"
+description: >
+  Read-only WebDAV share of the torrent library (categories, torrents, files)
+  for players such as ViMu. Files are streamed with seeking (HTTP Range).
+entry: "service.js"
+
+# Every path under /plugins/silo-webdav/ is a WebDAV path.
+routes:
+  - "/*"
