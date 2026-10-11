@@ -4,7 +4,7 @@
 //
 // Add this in the player (for example ViMu → Network → WebDAV):
 //
-//     http://<NAS>:<Silo port>/plugins/silo-webdav/
+//     http://<NAS>:<Silo port>/plugins/silo-webdav/library
 //
 // The tree is ts.torrfs: categories (when there are two or more), torrents,
 // their folders and files. Files are served by res.stream, which uses
@@ -21,6 +21,18 @@
 // ES5 only: Silo runs plugins in goja.
 
 var PREFIX = "/plugins/" + ts.info.plugin_id;
+
+// The same library is also served under PREFIX + "/library". Silo redirects
+// "/plugins/<id>" (no trailing slash) with a 307 before the plugin sees the
+// request, and many WebDAV clients (ViMu) drop the trailing slash of the
+// address and do not follow that redirect. "/plugins/<id>/library" is a path
+// inside the plugin, so it works with and without the slash.
+var ALIAS = "library";
+
+// Base of the hrefs in the current answer: PREFIX or PREFIX + "/library",
+// whichever the client used. Handlers run one at a time (Silo locks the
+// plugin runtime per request), so a module variable is safe.
+var currentBase = PREFIX;
 var AUTH_CACHE_MS = 10 * 60 * 1000;
 var AUTH_FAIL_MS = 5 * 1000;
 var authCache = {};
@@ -37,7 +49,8 @@ function xmlEscape(s) {
         .replace(/"/g, "&quot;");
 }
 
-// "/plugins/silo-webdav/Movies/A b/" -> "Movies/A b"
+// "/plugins/silo-webdav/Movies/A b/"         -> "Movies/A b"
+// "/plugins/silo-webdav/library/Movies/A b"  -> "Movies/A b" (base: .../library)
 function relPath(reqPath) {
     var p = String(reqPath || "");
     if (p.indexOf(PREFIX) === 0) {
@@ -54,12 +67,17 @@ function relPath(reqPath) {
         }
         clean.push(part);
     }
+    currentBase = PREFIX;
+    if (clean.length && clean[0] === ALIAS) {
+        clean.shift();
+        currentBase = PREFIX + "/" + ALIAS;
+    }
     return clean.join("/");
 }
 
-// "Movies/A b" -> "/plugins/silo-webdav/Movies/A%20b/" (each segment encoded)
+// "Movies/A b" -> "<base>/Movies/A%20b/" (each segment encoded)
 function hrefFor(path, isDir) {
-    var out = PREFIX + "/";
+    var out = currentBase + "/";
     if (path) {
         var parts = path.split("/");
         var enc = [];
@@ -272,7 +290,7 @@ function logged(handler) {
         } finally {
             var h = req.headers || {};
             var auth = h["authorization"] ? String(h["authorization"]).split(" ")[0] : "none";
-            console.log("[WebDAV] " + req.method + " /" + relPath(req.path) +
+            console.log("[WebDAV] " + req.method + " " + req.path.substring(PREFIX.length) +
                 (h["depth"] !== undefined ? " depth=" + h["depth"] : "") +
                 (h["range"] ? " range=" + h["range"] : "") +
                 " auth=" + auth +

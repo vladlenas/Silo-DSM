@@ -142,6 +142,26 @@ class OpenLibraryTests(unittest.TestCase):
         if resp.status == 207:
             self.assertEqual(list(responses(data)), [BASE])
 
+    def test_library_address_without_trailing_slash(self):
+        # ViMu drops the trailing slash; Silo would redirect /plugins/<id>.
+        lib = BASE + "library"
+        resp, data = self.h.request("PROPFIND", lib, {"Depth": "1"})
+        self.assertEqual(resp.status, 207)
+        self.assertEqual(sorted(responses(data)),
+                         [lib + "/", lib + "/Сериалы/", lib + "/Фильмы/"])
+
+    def test_library_address_files_and_range(self):
+        lib = BASE + "library/"
+        _, data = self.h.request("PROPFIND", lib + quote("Фильмы/Movie (2026)"), {"Depth": "1"})
+        self.assertIn(lib + "Фильмы/Movie (2026)/movie.mkv", responses(data))
+        resp, body = self.h.request("GET", lib + quote("Фильмы/Movie (2026)/movie.mkv"), {"Range": "bytes=0-4"})
+        self.assertEqual((resp.status, body), (206, b"01234"))
+
+    def test_any_credentials_work_without_an_owner_password(self):
+        token = base64.b64encode(b"anything:1").decode()
+        resp, _ = self.h.request("PROPFIND", BASE + "library", {"Depth": "0", "Authorization": "Basic " + token})
+        self.assertEqual(resp.status, 207)
+
     def test_writing_is_not_possible(self):
         resp, _ = self.h.request("PUT", BASE + "x.txt", body=b"x")
         self.assertEqual(resp.status, 404)

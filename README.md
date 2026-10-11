@@ -129,15 +129,18 @@ The plugin is not part of the `.spk`; it is a separate file of each release,
 1. Open Silo (`http://<NAS address>:8095`), admin panel → **Plugins**, upload
    `silo-webdav-<version>.zip` and make sure it is enabled.
 2. In ViMu add a **WebDAV** network source:
-   - address: `http://<NAS address>:8095/plugins/silo-webdav/`
-   - without an owner password in Silo: no login;
+   - address: `http://<NAS address>:8095/plugins/silo-webdav/library`
+     (in ViMu's `dav://` field: `<NAS address>:8095/plugins/silo-webdav/library`)
+   - without an owner password in Silo: no login needed (any login and
+     password are accepted, if the player insists on one);
    - with an owner password: user `owner` and the owner password (or another
      Silo user and their password).
 3. Add torrents in Silo's web interface; they appear in ViMu right away.
 
-The address must end with a slash. Without it Silo answers WebDAV requests
-with a redirect (307), which a browser follows but many WebDAV clients do
-not. Every request the plugin gets is written to `Silo.log`
+Use the `/library` address. `/plugins/silo-webdav/` works too, but only with
+the trailing slash: without it Silo answers with a redirect (307) before the
+plugin is reached, which a browser follows but WebDAV clients such as ViMu do
+not. `/library` is a path inside the plugin, so the slash does not matter. Every request the plugin gets is written to `Silo.log`
 (`[WebDAV] PROPFIND / depth=1 … -> 207`), so a client that does not connect
 shows what it asked for.
 
