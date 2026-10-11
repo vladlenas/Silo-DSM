@@ -3,6 +3,18 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## 0.2.1 (2026-10-11)
+
+Silo stays at `Silo.1` (commit `fc5795e`).
+
+### Fixed
+
+- **Helper showed Silo as stopped while it was running**, and a restart from
+  the Helper stayed on "Restarting" until it gave up. DSM starts Silo by its
+  real path (`/volume1/@appstore/TorrServerSilo/bin/silo`), while the Helper
+  looked for `/var/packages/TorrServerSilo/target/bin/silo`, a link to the same
+  file. Paths are now compared after resolving links.
+
 ## 0.1.1 (2026-10-11)
 
 First beta. Silo `Silo.1` (commit `fc5795e`).

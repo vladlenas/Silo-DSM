@@ -10,6 +10,7 @@ import re
 import shutil
 import stat
 import tempfile
+import time
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -127,6 +128,33 @@ class SaveSettingsTests(Base):
         ok, message = h.save_settings(form(data_dir="/etc"))
         self.assertFalse(ok)
         self.assertIn("inside a volume", message)
+
+
+class ProcessTests(Base):
+    """DSM starts Silo by its real path (/volume1/@appstore/...), while the
+    package path /var/packages/<pkg>/target is a link to it."""
+
+    def test_running_silo_is_found_through_the_target_link(self):
+        import subprocess
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, True)
+        real = os.path.join(root, "@appstore", "TorrServerSilo")
+        os.makedirs(os.path.join(real, "bin"))
+        shutil.copy(shutil.which("sleep"), os.path.join(real, "bin", "silo"))
+        link = os.path.join(root, "target")
+        os.symlink(real, link)
+
+        old = h.SILO_BIN
+        h.SILO_BIN = os.path.join(link, "bin", "silo")
+        self.addCleanup(setattr, h, "SILO_BIN", old)
+
+        self.assertFalse(h.is_silo_running())
+        proc = subprocess.Popen([os.path.join(real, "bin", "silo"), "30"])
+        self.addCleanup(proc.wait)
+        self.addCleanup(proc.kill)
+        time.sleep(0.2)
+        self.assertEqual(h.silo_pids(), [proc.pid])
+        self.assertEqual(h.get_status(), "Running")
 
 
 class FolderTests(Base):

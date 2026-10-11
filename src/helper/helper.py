@@ -33,7 +33,13 @@ MAX_POST_BYTES = 64 * 1024
 
 PACKAGE_NAME = siloconf.PACKAGE_NAME
 PACKAGE_VAR = siloconf.PACKAGE_VAR
-PACKAGE_TARGET = os.environ.get("SILO_DSM_TARGET") or "/var/packages/{}/target".format(PACKAGE_NAME)
+# DSM hands its own path to the package scripts (SYNOPKG_PKGDEST); the Helper
+# inherits it from start-stop-status. SILO_DSM_TARGET exists for the tests.
+PACKAGE_TARGET = (
+    os.environ.get("SILO_DSM_TARGET")
+    or os.environ.get("SYNOPKG_PKGDEST")
+    or "/var/packages/{}/target".format(PACKAGE_NAME)
+)
 SILO_BIN = os.path.join(PACKAGE_TARGET, "bin", "silo")
 # Written by build-package.sh: "Silo.1 fc5795e".
 VERSION_FILE = os.path.join(HELPER_DIR, "VERSION")
@@ -578,13 +584,19 @@ def get_silo_version():
 
 def silo_pids():
     """Pids of this package's Silo (matched by the binary path, so another
-    "silo" process on the NAS is never mistaken for it)."""
+    "silo" process on the NAS is never mistaken for it).
+
+    Paths are compared after resolving links: DSM starts Silo as
+    /volume1/@appstore/TorrServerSilo/bin/silo, while
+    /var/packages/TorrServerSilo/target is a link to that folder.
+    """
     pids = []
     try:
         names = os.listdir("/proc")
     except OSError:
         return pids
 
+    wanted = os.path.realpath(SILO_BIN)
     for name in names:
         if not name.isdigit():
             continue
@@ -593,7 +605,9 @@ def silo_pids():
                 first = f.read().split(b"\0", 1)[0]
         except OSError:
             continue
-        if first.decode("utf-8", errors="replace") == SILO_BIN:
+        if not first:
+            continue
+        if os.path.realpath(first.decode("utf-8", errors="replace")) == wanted:
             pids.append(int(name))
     return sorted(pids)
 

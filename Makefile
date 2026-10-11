@@ -4,7 +4,7 @@
 # Silo build (Silo.1 -> x.y.1).
 SILO_VERSION := Silo.1
 SILO_COMMIT := fc5795e10234d18dda509a781472a82e402322bd
-PKG_VERSION := 0.1.1
+PKG_VERSION := 0.2.1
 
 # Only amd64 is released for now (build-package.sh also knows arm64 and arm7).
 ARCHES := amd64
