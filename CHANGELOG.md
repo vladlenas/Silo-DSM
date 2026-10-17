@@ -3,7 +3,9 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
-## Unreleased
+## 0.7.1 (2026-10-17)
+
+Silo stays at `Silo.1` (commit `fc5795e`).
 
 ### Added
 
@@ -14,6 +16,9 @@ The top entry is used as the GitHub release notes; keep its version equal to
   before, so deleted ones stay deleted). Supports TorrServer's login.
 - The Helper wakes the plugin's automatic scan once a minute (Silo plugins
   have no timers); without the plugin the call is ignored.
+- The Helper notices when DSM's nginx loses the route to the Helper (the
+  settings window then shows Synology's 404) and writes it to `Silo.log` with
+  the fix: reinstall the package over itself or restart nginx.
 
 ### Changed
 

@@ -204,6 +204,56 @@ class PluginTickTests(Base):
         self.assertEqual(calls, [])
 
 
+class NginxRouteTests(Base):
+    """The Helper logs when DSM nginx loses (and regains) its address."""
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(setattr, h, "nginx_route_status", h.nginx_route_status)
+        h.NGINX_ROUTE_STATE["missing"] = None
+        log = os.path.join(VAR, "Silo.log")
+        if os.path.exists(log):
+            os.unlink(log)
+
+    def lines(self):
+        path = os.path.join(VAR, "Silo.log")
+        return slurp(path).splitlines() if os.path.exists(path) else []
+
+    def check(self, status):
+        h.nginx_route_status = lambda: status
+        h.check_nginx_route()
+
+    def test_ok_is_silent(self):
+        self.check(403)
+        self.check(403)
+        self.assertEqual(self.lines(), [])
+
+    def test_missing_is_logged_once_then_recovery(self):
+        self.check(403)
+        self.check(404)
+        self.check(404)
+        self.check(403)
+        lines = self.lines()
+        self.assertEqual(len(lines), 2, lines)
+        self.assertIn("no longer knows the Helper address", lines[0])
+        self.assertIn("knows the Helper address again", lines[1])
+
+    def test_redirect_or_no_answer_says_nothing(self):
+        for status in (None, 302, 301):
+            self.check(status)
+        self.assertEqual(self.lines(), [])
+
+    def test_dsm_port_from_synoinfo(self):
+        conf = os.path.join(VAR, "synoinfo.conf")
+        with open(conf, "w") as f:
+            f.write('external_port_dsm_http="5080"\n')
+        self.addCleanup(setattr, h, "SYNOINFO_FILES", h.SYNOINFO_FILES)
+        h.SYNOINFO_FILES = (conf,)
+        self.assertEqual(h.dsm_http_port(), 5080)
+        h.SYNOINFO_FILES = (os.path.join(VAR, "missing.conf"),)
+        self.assertEqual(h.dsm_http_port(), 5000)
+
+
 class FolderTests(Base):
     def test_unwritable_folder_names_the_share(self):
         root = tempfile.mkdtemp()

@@ -3028,10 +3028,82 @@ def plugin_tick():
         return None
 
 
+# DSM's nginx reaches this Helper through a rule that DSM itself registers
+# from conf/resource. It has been seen to disappear while the package kept
+# running (the DSM window then shows Synology's "page not found"); the package
+# runs without root and cannot restore it. So the Helper checks its own address
+# through nginx and logs when the rule goes missing and when it is back, to
+# find out what removes it. Without a DSM session the Helper answers 403; a
+# 404 comes from nginx itself.
+NGINX_ROUTE_PATH = "/webman/3rdparty/{}/helper/".format(PACKAGE_NAME)
+SYNOINFO_FILES = ("/etc/synoinfo.conf", "/etc.defaults/synoinfo.conf")
+NGINX_ROUTE_STATE = {"missing": None}
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Report a redirect (DSM forcing HTTPS) instead of following it."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def dsm_http_port():
+    for path in SYNOINFO_FILES:
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    key, _, value = line.partition("=")
+                    if key.strip() == "external_port_dsm_http":
+                        value = value.strip().strip('"')
+                        if value.isdigit():
+                            return int(value)
+        except OSError:
+            continue
+    return 5000
+
+
+def nginx_route_status():
+    """HTTP status of the Helper address through DSM nginx, or None."""
+    url = "http://127.0.0.1:{}{}".format(dsm_http_port(), NGINX_ROUTE_PATH)
+    opener = urllib.request.build_opener(_NoRedirect())
+    try:
+        with opener.open(url, timeout=10) as response:
+            return response.status
+    except urllib.error.HTTPError as e:
+        return e.code
+    except Exception:
+        return None
+
+
+def check_nginx_route():
+    status = nginx_route_status()
+    if status is None or status in (301, 302, 307, 308):
+        return  # DSM not reachable over plain HTTP here: nothing to tell
+    missing = status == 404
+    if missing != NGINX_ROUTE_STATE["missing"]:
+        if missing:
+            helper_log("Warning: DSM nginx no longer knows the Helper address {} "
+                       "(HTTP 404), the package window shows \"page not found\". "
+                       "Reinstall the package over itself or run "
+                       "\"sudo systemctl restart nginx\".".format(NGINX_ROUTE_PATH))
+        elif NGINX_ROUTE_STATE["missing"]:
+            helper_log("DSM nginx knows the Helper address again (HTTP {})".format(status))
+        NGINX_ROUTE_STATE["missing"] = missing
+
+
+def helper_log(message):
+    try:
+        with open(SILO_LOG, "a", encoding="utf-8") as f:
+            f.write("{} helper: {}\n".format(time.strftime("%Y/%m/%d %H:%M:%S UTC0", time.gmtime()), message))
+    except OSError:
+        pass
+
+
 def plugin_tick_loop():
     while True:
         time.sleep(PLUGIN_TICK_SECONDS)
         plugin_tick()
+        check_nginx_route()
 
 
 def run():
