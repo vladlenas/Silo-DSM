@@ -9,9 +9,13 @@ PKG_VERSION := 0.6.1
 # Only amd64 is released for now (build-package.sh also knows arm64 and arm7).
 ARCHES := amd64
 
-.PHONY: all binaries clean
+# Silo plugin, installed in Silo's admin panel (not part of the .spk).
+PLUGIN := torrserver-import
+PLUGIN_VERSION := $(shell sed -n 's/^version: *"\(.*\)"/\1/p' plugins/$(PLUGIN)/info.yaml)
 
-all: $(addprefix silo-,$(ARCHES))
+.PHONY: all binaries plugin clean
+
+all: $(addprefix silo-,$(ARCHES)) plugin
 
 silo-%:
 	@./build-package.sh "$(SILO_VERSION)" "$(SILO_COMMIT)" "$*" "$(PKG_VERSION)"
@@ -21,6 +25,12 @@ binaries:
 	@for arch in $(ARCHES); do \
 		BUILD_ONLY=1 ./build-package.sh "$(SILO_VERSION)" "$(SILO_COMMIT)" "$$arch" "$(PKG_VERSION)" || exit 1; \
 	done
+
+# spk/torrserver-import-<version>.zip: Silo → admin panel → Plugins → upload.
+plugin:
+	@mkdir -p spk
+	@python3 -c 'import sys, os, zipfile; src, out = sys.argv[1], sys.argv[2]; z = zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED); [z.write(os.path.join(r, f), os.path.relpath(os.path.join(r, f), src)) for r, _, fs in sorted(os.walk(src)) for f in sorted(fs)]; z.close()' plugins/$(PLUGIN) spk/$(PLUGIN)-$(PLUGIN_VERSION).zip
+	@echo ">>> spk/$(PLUGIN)-$(PLUGIN_VERSION).zip"
 
 clean:
 	rm -rf spk dest_bin dest_src build

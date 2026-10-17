@@ -1,0 +1,31 @@
+# Imports the torrent list of TorrServer (MatriX, for example TorrServer DSM)
+# into Silo: a button for a manual import and an automatic scan every N
+# minutes. Title, poster and category are taken over.
+id: "torrserver-import"
+name: "TorrServer Import"
+version: "1.0.0"
+author: "vladlenas"
+description: "Imports torrents from TorrServer (MatriX) into Silo: on demand or automatically every N minutes"
+entry: "service.js"
+icon: "/img/ico-import.svg"
+
+menu:
+  - title: "TorrServer Import"
+    title_key: "plugin.tsimport.title"
+    route: "/"
+    rank: 100
+    icon: "/img/ico-import.svg"
+
+events:
+  - "system:boot"
+
+routes:
+  - "/"
+  - "/index.html"
+  - "/js/*"
+  - "/img/*"
+  - "/api/status"
+  - "/api/settings"
+  - "/api/test"
+  - "/api/import"
+  - "/api/tick"

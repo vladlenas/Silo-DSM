@@ -39,6 +39,11 @@ jobs:
           node --check src/ui/Silo.js
           node tests/test_ui.js
 
+      - name: Silo plugin (syntax, translations)
+        run: |
+          for f in plugins/*/service.js plugins/*/js/*.js; do node --check "$f"; done
+          for f in plugins/*/i18n/*.json; do python3 -m json.tool "$f" > /dev/null; done
+
       - name: Package script tests
         run: sh tests/test_scripts.sh
 

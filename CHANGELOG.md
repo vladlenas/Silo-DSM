@@ -5,6 +5,16 @@ The top entry is used as the GitHub release notes; keep its version equal to
 
 ## Unreleased
 
+### Added
+
+- **TorrServer Import plugin** (`torrserver-import`, separate zip in the
+  release): imports the torrent list of TorrServer (MatriX / TorrServer DSM)
+  into Silo with title, poster and category — a button for a manual import
+  and an automatic scan every N minutes (only torrents it has not seen
+  before, so deleted ones stay deleted). Supports TorrServer's login.
+- The Helper wakes the plugin's automatic scan once a minute (Silo plugins
+  have no timers); without the plugin the call is ignored.
+
 ### Changed
 
 - **New package icon** in the style of Synology's own icons: the TorrServer DSM

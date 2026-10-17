@@ -142,6 +142,28 @@ and files, with seeking (HTTP Range).
    - password: the WebDAV password from step 2
 4. Torrents appear once Silo has their file list (metadata).
 
+## Import from TorrServer DSM
+
+The **TorrServer Import** plugin (`torrserver-import-<version>.zip`, attached
+to each release, not part of the `.spk`) copies the torrent list of TorrServer
+(MatriX, for example TorrServer DSM on port 8090) into Silo, with title,
+poster and category.
+
+1. Silo → admin panel → **Plugins** → upload the zip, enable it. The page
+   appears in Silo's menu for the owner.
+2. Enter the TorrServer address (`http://127.0.0.1:8090` when TorrServer DSM
+   runs on the same NAS), and its login and password if TorrServer has
+   authentication on. **Test connection** checks them.
+3. **Import now** adds every TorrServer torrent Silo does not have yet.
+4. **Automatic scan** (on by default, every 15 minutes) adds new TorrServer
+   torrents by itself. It only adds torrents it has not seen before, so a
+   torrent deleted in Silo is not added back; nothing is ever deleted.
+
+Silo plugins have no timers: the scan runs at Silo start and when the plugin's
+`/api/tick` is called. The Helper of this package calls it once a minute; the
+plugin decides itself whether its interval is over. The TorrServer password is
+kept in Silo's database (plugin storage).
+
 ## Troubleshooting
 
 - **Silo does not start:** Helper → Logs, `Silo.log`. The status page also
@@ -156,8 +178,9 @@ and files, with seeking (HTTP Range).
 ### Building
 
 ```sh
-make            # spk/Silo-DSM-<version>-amd64.spk
-make silo-amd64 # the same, by architecture
+make            # spk/Silo-DSM-<version>-amd64.spk and spk/torrserver-import-<version>.zip
+make silo-amd64 # only the .spk
+make plugin     # only the TorrServer Import plugin
 make binaries   # only the Silo binary (dest_bin/<commit>/)
 make clean
 ```
@@ -190,7 +213,7 @@ tag. The last number of `PKG_VERSION` is the Silo build (`Silo.1` → `x.y.1`).
 To release: update the three values, add a `CHANGELOG.md` entry for the new
 `PKG_VERSION` and merge to `main`. The **Build** workflow runs the tests, builds
 the amd64 package with Go 1.26, and publishes a GitHub **pre-release**
-`v<PKG_VERSION>` with the `.spk` and `SHA256SUMS`. Every package
+`v<PKG_VERSION>` with the `.spk`, the plugin zip and `SHA256SUMS`. Every package
 carries `beta="yes"`.
 
 ### Tests

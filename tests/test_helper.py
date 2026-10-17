@@ -157,6 +157,53 @@ class ProcessTests(Base):
         self.assertEqual(h.get_status(), "Running")
 
 
+class PluginTickTests(Base):
+    """The Helper wakes the TorrServer Import plugin once a minute."""
+
+    def running(self, value):
+        self.addCleanup(setattr, h, "is_silo_running", h.is_silo_running)
+        h.is_silo_running = lambda: value
+
+    def serve(self, status):
+        import http.server
+        import threading
+        calls = []
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                calls.append(self.path)
+                self.send_response(status)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *a):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        h.save_settings(form(port=server.server_address[1]))
+        return calls
+
+    def test_tick_posts_to_the_plugin(self):
+        calls = self.serve(200)
+        self.running(True)
+        self.assertEqual(h.plugin_tick(), 200)
+        self.assertEqual(calls, [h.PLUGIN_TICK_PATH])
+
+    def test_missing_plugin_is_harmless(self):
+        self.serve(404)
+        self.running(True)
+        self.assertEqual(h.plugin_tick(), 404)
+
+    def test_no_call_while_silo_is_stopped(self):
+        calls = self.serve(200)
+        self.running(False)
+        self.assertIsNone(h.plugin_tick())
+        self.assertEqual(calls, [])
+
+
 class FolderTests(Base):
     def test_unwritable_folder_names_the_share(self):
         root = tempfile.mkdtemp()

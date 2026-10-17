@@ -14,6 +14,8 @@ import subprocess
 import sys
 import time
 import threading
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse, quote
 
@@ -3001,6 +3003,37 @@ def log_rotation_loop():
         time.sleep(10)
 
 
+# Silo plugins have no timers. The "TorrServer Import" plugin
+# (plugins/torrserver-import) runs its automatic scan when this endpoint is
+# called and decides itself whether its interval is over, so one call a
+# minute is enough. A 404 (plugin not installed) or a stopped Silo is ignored.
+PLUGIN_TICK_PATH = "/plugins/torrserver-import/api/tick"
+PLUGIN_TICK_SECONDS = 60
+
+
+def plugin_tick():
+    """One wake-up call; returns the HTTP status, or None when Silo is
+    stopped or could not be reached."""
+    if not is_silo_running():
+        return None
+    url = "http://127.0.0.1:{}{}".format(get_settings()["port"], PLUGIN_TICK_PATH)
+    request = urllib.request.Request(url, data=b"", method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            response.read()
+            return response.status
+    except urllib.error.HTTPError as e:
+        return e.code
+    except Exception:
+        return None
+
+
+def plugin_tick_loop():
+    while True:
+        time.sleep(PLUGIN_TICK_SECONDS)
+        plugin_tick()
+
+
 def run():
     # Plain HTTP on loopback only. DSM nginx terminates TLS and proxies
     # /webman/3rdparty/TorrServerSilo/helper/ here, so the browser never talks
@@ -3009,6 +3042,7 @@ def run():
     server.daemon_threads = True
 
     threading.Thread(target=log_rotation_loop, daemon=True).start()
+    threading.Thread(target=plugin_tick_loop, daemon=True).start()
 
     try:
         server.serve_forever()
