@@ -1,0 +1,20 @@
+# Built into Silo by Silo DSM (overlay/apply.py). The library in the style of
+# DSM; Silo's own Default Web UI stays next to it as the other theme.
+id: "dsm-ui"
+name: "DSM Style UI"
+version: "1.0.0"
+author: "Silo DSM"
+description: "Library in the style of Synology DSM: categories, search, light admin panel. Switch back with \"Make theme\" on Default Web UI."
+theme_ui: true
+entry: "service.js"
+icon: "/img/logo.png"
+
+events: []
+
+routes:
+  - "/"
+  - "/index.html"
+  - "/css/*"
+  - "/js/*"
+  - "/img/*"
+  - "/i18n/*"

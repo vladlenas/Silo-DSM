@@ -1,7 +1,8 @@
 #!/bin/bash
 # Builds one .spk: Silo from a pinned commit of the TorrServer "silo" branch
-# with the DSM look of overlay/ (see overlay/apply.py), compiled for one
-# architecture, plus the package scripts, Helper and UI.
+# with the DSM look and the built-in plugins of overlay/ and plugins/ (see
+# overlay/apply.py), compiled for one architecture, plus the package scripts,
+# Helper and UI.
 #
 #   ./build-package.sh <silo version> <silo commit> <arch> <package version>
 #
@@ -46,8 +47,8 @@ esac
 SRC_DIR="dest_src/${SILO_COMMIT}"
 
 # The web pages are compiled into the binary, so a cached binary is only
-# reused for the same commit and the same overlay.
-OVERLAY_ID="$(cd overlay && find . -type f ! -path '*/__pycache__/*' -print0 | LC_ALL=C sort -z |
+# reused for the same commit and the same overlay and plugins.
+OVERLAY_ID="$(find overlay plugins -type f ! -path '*/__pycache__/*' -print0 | LC_ALL=C sort -z |
     xargs -0 sha256sum | sha256sum | cut -c1-12)"
 BIN_PATH="dest_bin/${SILO_COMMIT}-${OVERLAY_ID}/silo-linux-${ARCH}"
 

@@ -3,17 +3,20 @@
 
     overlay/apply.py <silo checkout> [<overlay dir>]
 
-Silo embeds its web pages in the binary, so the look is changed in the source
-tree, right before `go build`:
+Silo embeds its web pages and built-in plugins in the binary, so they are
+added to the source tree right before `go build`:
 
-* internal/web/static/css/style.css (shared by the admin panel, the login page
-  and plugin pages) gets overlay/static/dsm-core.css appended: light DSM
-  colours instead of the dark ones.
-* internal/web/static/img: the package icon instead of Silo's logo.
-* internal/plugin/default_ui (the library page, Silo's built-in theme) gets
-  the page, style, icons and js/dsm.js of overlay/default_ui. Its own scripts
-  stay, so the library keeps working exactly as upstream wrote it.
-* "SILO" in the admin panel and on the login page becomes "TorrServer Silo".
+* DSM Style UI (overlay/dsm_ui) becomes a built-in theme next to Silo's own
+  Default Web UI, listed first so it is the main page. Its js/ is a copy of
+  the Default Web UI scripts plus js/dsm.js, so the library works exactly as
+  upstream wrote it. Default Web UI itself is not touched: "Make theme" on it
+  in the admin panel brings Silo's own look back.
+* TorrServer Import (plugins/torrserver-import) becomes a built-in plugin.
+* internal/web/static/css/style.css (admin panel, login page, plugin pages)
+  gets overlay/static/dsm-core.css appended. It only applies under
+  html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme;
+  it also shows the package icon and "TorrServer Silo" instead of Silo's
+  logo. With Silo's own theme every page looks exactly as upstream made it.
 
 The tree is reset to the commit first, so running it twice is the same as
 running it once. Anything that does not match what this script expects (a
@@ -28,6 +31,8 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+LOOK_SCRIPT = '<script src="/js/silo-look.js"></script>'
 
 
 class OverlayError(Exception):
@@ -76,27 +81,19 @@ def core_style(src, overlay):
     css = need(os.path.join(src, "internal/web/static/css/style.css"))
     write(css, read(css).rstrip("\n") + "\n\n" + read(os.path.join(overlay, "static/dsm-core.css")))
 
-    img = need(os.path.join(src, "internal/web/static/img"))
-    for name in sorted(os.listdir(os.path.join(overlay, "static/img"))):
-        need(os.path.join(img, name))
-        shutil.copyfile(os.path.join(overlay, "static/img", name), os.path.join(img, name))
-
-    manifest = os.path.join(img, "site.webmanifest")
-    data = json.loads(read(need(manifest)))
-    data.update(name="TorrServer Silo", short_name="Silo",
-                theme_color="#f1f5f9", background_color="#f1f5f9")
-    write(manifest, json.dumps(data, indent=4) + "\n")
+    # New files next to Silo's own: the package icon and the theme check.
+    for sub, name in (("img", "dsm-logo.png"), ("js", "silo-look.js")):
+        target = os.path.join(need(os.path.join(src, "internal/web/static", sub)), name)
+        if os.path.exists(target):
+            raise OverlayError("Silo already has internal/web/static/{}/{}".format(sub, name))
+        shutil.copyfile(os.path.join(overlay, "static", sub, name), target)
 
 
-def branding(src):
-    login = os.path.join(src, "internal/web/static/login.html")
-    replace_once(login, "<h1>SILO</h1>", "<h1>TorrServer Silo</h1>")
-    replace_once(login, "<title>TS Silo - Sign in</title>", "<title>TorrServer Silo</title>")
-
-    admin = os.path.join(src, "internal/plugin/admin_ui/index.html")
-    replace_once(admin, '<span class="brand-name">SILO</span>',
-                 '<span class="brand-name">TorrServer Silo</span>')
-    replace_once(admin, "<title>TS Silo Admin</title>", "<title>TorrServer Silo · Admin</title>")
+def look_script(src):
+    """/js/silo-look.js in <head> of the admin panel and the login page."""
+    for page in ("internal/web/static/login.html", "internal/plugin/admin_ui/index.html"):
+        replace_once(os.path.join(src, page), '<script src="/i18n.js"></script>',
+                     LOOK_SCRIPT + '\n    <script src="/i18n.js"></script>')
 
 
 def element_ids_used(js_dir):
@@ -111,13 +108,12 @@ def element_ids_used(js_dir):
     return ids
 
 
-def default_ui(src, overlay):
-    ui = need(os.path.join(src, "internal/plugin/default_ui"))
+def dsm_ui(src, overlay):
+    plugins = need(os.path.join(src, "internal/plugin"))
+    ui = need(os.path.join(plugins, "default_ui"))
     js_dir = need(os.path.join(ui, "js"))
-    theme = os.path.join(overlay, "default_ui")
-
-    for name in ("index.html", "info.yaml", "i18n"):
-        need(os.path.join(ui, name))
+    theme = os.path.join(overlay, "dsm_ui")
+    need(os.path.join(ui, "i18n"))
 
     page = read(os.path.join(theme, "index.html"))
 
@@ -128,29 +124,75 @@ def default_ui(src, overlay):
     own_js = sorted(os.listdir(os.path.join(theme, "js")))
     missing_js = [n for n in upstream_js if n not in on_page]
     if missing_js:
-        raise OverlayError("Default Web UI scripts not loaded by overlay/default_ui/index.html: "
+        raise OverlayError("Default Web UI scripts not loaded by overlay/dsm_ui/index.html: "
                            + ", ".join(missing_js))
     unknown_js = [n for n in on_page if n not in upstream_js and n not in own_js]
     if unknown_js:
-        raise OverlayError("overlay/default_ui/index.html loads scripts Silo does not have: "
+        raise OverlayError("overlay/dsm_ui/index.html loads scripts Silo does not have: "
                            + ", ".join(unknown_js))
 
     page_ids = set(re.findall(r'\bid="([\w-]+)"', page))
     missing_ids = sorted(element_ids_used(js_dir) - page_ids)
     if missing_ids:
         raise OverlayError("elements the Default Web UI scripts need are missing in "
-                           "overlay/default_ui/index.html: " + ", ".join(missing_ids))
+                           "overlay/dsm_ui/index.html: " + ", ".join(missing_ids))
+
+    target = os.path.join(plugins, "dsm_ui")
+    if os.path.exists(target):
+        raise OverlayError("Silo already has internal/plugin/dsm_ui")
+    os.makedirs(target)
+    for sub in ("js", "img", "i18n"):
+        if os.path.isdir(os.path.join(ui, sub)):
+            copy_tree(os.path.join(ui, sub), os.path.join(target, sub))
+    for name in os.listdir(os.path.join(target, "js")):
+        if name.endswith("_test.js"):
+            os.remove(os.path.join(target, "js", name))
 
     for sub in ("css", "js", "img"):
-        copy_tree(os.path.join(theme, sub), os.path.join(ui, sub))
-    shutil.copyfile(os.path.join(theme, "index.html"), os.path.join(ui, "index.html"))
+        copy_tree(os.path.join(theme, sub), os.path.join(target, sub))
+    for name in ("index.html", "info.yaml", "service.js"):
+        shutil.copyfile(os.path.join(theme, name), os.path.join(target, name))
 
-    # Own words go into the dictionaries of the Default Web UI.
+    # Own words next to the ones of the Default Web UI (also when that one is
+    # switched off, its dictionary is not loaded).
     for name in sorted(os.listdir(os.path.join(theme, "i18n"))):
-        target = os.path.join(ui, "i18n", name)
-        data = json.loads(read(target)) if os.path.exists(target) else {}
+        dest = os.path.join(target, "i18n", name)
+        data = json.loads(read(dest)) if os.path.exists(dest) else {}
         data.update(json.loads(read(os.path.join(theme, "i18n", name))))
-        write(target, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+        write(dest, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+
+def torrserver_import(src, repo):
+    target = os.path.join(need(os.path.join(src, "internal/plugin")), "torrserver_import")
+    if os.path.exists(target):
+        raise OverlayError("Silo already has internal/plugin/torrserver_import")
+    copy_tree(os.path.join(repo, "plugins/torrserver-import"), target)
+
+
+BUILTIN_EMBED = """//go:embed all:admin_ui
+var adminUIFiles embed.FS
+"""
+BUILTIN_SOURCES = """		{defaultUIFiles, "default_ui"},
+		{adminUIFiles, "admin_ui"},
+"""
+
+
+def register_builtins(src):
+    """DSM Style UI first (the main page on a new install), Silo's own plugins
+    after it, TorrServer Import last."""
+    go = os.path.join(src, "internal/plugin/builtin.go")
+    replace_once(go, BUILTIN_EMBED, BUILTIN_EMBED + """
+// Added by Silo DSM.
+//go:embed all:dsm_ui
+var dsmUIFiles embed.FS
+
+// Added by Silo DSM.
+//go:embed all:torrserver_import
+var torrserverImportFiles embed.FS
+""")
+    replace_once(go, BUILTIN_SOURCES, """		{dsmUIFiles, "dsm_ui"},
+""" + BUILTIN_SOURCES + """		{torrserverImportFiles, "torrserver_import"},
+""")
 
 
 def main(argv):
@@ -162,8 +204,10 @@ def main(argv):
     try:
         reset(src)
         core_style(src, overlay)
-        branding(src)
-        default_ui(src, overlay)
+        look_script(src)
+        dsm_ui(src, overlay)
+        torrserver_import(src, REPO)
+        register_builtins(src)
     except (OverlayError, OSError, ValueError, subprocess.CalledProcessError) as e:
         print("ERROR: DSM look: {}".format(e), file=sys.stderr)
         return 1

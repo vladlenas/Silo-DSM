@@ -1,13 +1,14 @@
 
 /* ============================================================================
    Silo DSM: light DSM look for the shared Silo style (admin panel, login,
-   every plugin page that uses /css/style.css). Appended to the end of
-   internal/web/static/css/style.css when the package is built, so it wins
-   over the dark defaults above it. Almost all of Silo's colours are tokens;
+   plugin pages). Appended to internal/web/static/css/style.css when the
+   package is built. Everything is scoped to html.silo-dsm, which
+   /js/silo-look.js sets while DSM Style UI is the main page; with Silo's own
+   theme the dark look stays exactly as it was. Almost all of Silo's colours are tokens;
    the rest is the few places that hard-code dark text on the accent colour.
    ============================================================================ */
 
-:root {
+html.silo-dsm {
     --silo-bg: #f1f5f9;
     --silo-bg-raised: #ffffff;
     --silo-surface: #ffffff;
@@ -28,58 +29,77 @@
     --silo-sidebar-w: 236px;
 }
 
-body {
+html.silo-dsm body {
     font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
 }
 
-h1, h2, h3 { letter-spacing: 0; }
+html.silo-dsm h1,
+html.silo-dsm h2,
+html.silo-dsm h3 { letter-spacing: 0; }
 
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #c9d2dd; }
+html.silo-dsm ::-webkit-scrollbar-track { background: transparent; }
+html.silo-dsm ::-webkit-scrollbar-thumb { background: #c9d2dd; }
 
 /* Side panel: white, like the DSM app windows and the package window */
-.sidebar {
+html.silo-dsm .sidebar {
     background: #fff;
     border-right-color: #d6dee8;
 }
 
-.brand { border-bottom-color: #e5e9ef; }
+html.silo-dsm .brand { border-bottom-color: #e5e9ef; }
 
-.logo-mini { width: 32px; height: 32px; border-radius: 0; }
-
-.brand-name {
-    color: var(--silo-steel-bright);
-    letter-spacing: 0;
-    font-weight: 600;
-    font-size: 15px;
+/* Package icon and name instead of Silo's logo (the page keeps "SILO" and
+   Silo's icon for its own theme) */
+html.silo-dsm .logo-mini,
+html.silo-dsm .login-brand img {
+    content: url(/img/dsm-logo.png);
+    border-radius: 0;
 }
 
-.nav-item {
+html.silo-dsm .logo-mini { width: 32px; height: 32px; }
+
+html.silo-dsm .brand-name,
+html.silo-dsm .login-brand h1 {
+    font-size: 0;
+    letter-spacing: 0;
+}
+
+html.silo-dsm .brand-name::after,
+html.silo-dsm .login-brand h1::after {
+    content: "TorrServer Silo";
+    color: var(--silo-steel-bright);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+html.silo-dsm .login-brand h1::after { font-size: 20px; }
+
+html.silo-dsm .nav-item {
     border-left: 0;
     border-radius: 5px;
     padding: 10px 12px;
     color: #30415e;
 }
 
-.nav-item:hover { background: #edf5ff; color: #30415e; }
+html.silo-dsm .nav-item:hover { background: #edf5ff; color: #30415e; }
 
-.nav-item.active {
+html.silo-dsm .nav-item.active {
     background: #e5f1ff;
     color: #1167c9;
     font-weight: 600;
     box-shadow: inset 3px 0 0 #1677ff;
 }
 
-.nav-icon { opacity: 1; }
+html.silo-dsm .nav-icon { opacity: 1; }
 
-.nav-section-title { color: #98a3b3; font-size: 12px; letter-spacing: .04em; }
+html.silo-dsm .nav-section-title { color: #98a3b3; font-size: 12px; letter-spacing: .04em; }
 
-.user-avatar { color: #fff; }
+html.silo-dsm .user-avatar { color: #fff; }
 
-.sidebar-footer { color: var(--silo-text-faint); }
+html.silo-dsm .sidebar-footer { color: var(--silo-text-faint); }
 
 /* Admin panel sections get line icons in the text colour */
-.nav-item[data-section]::before {
+html.silo-dsm .nav-item[data-section]::before {
     content: "";
     width: 20px;
     height: 20px;
@@ -89,139 +109,139 @@ h1, h2, h3 { letter-spacing: 0; }
     mask: center / contain no-repeat;
 }
 
-.nav-item[data-section="dashboard"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2212%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%223%22%20y%3D%2216%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2212%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%223%22%20y%3D%2216%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3C/svg%3E"); }
-.nav-item[data-section="users"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22/%3E%3Cpath%20d%3D%22M3%2020a6%206%200%200%201%2012%200M16%205a3%203%200%200%201%200%206M21%2020a6%206%200%200%200-4-5.6%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22/%3E%3Cpath%20d%3D%22M3%2020a6%206%200%200%201%2012%200M16%205a3%203%200%200%201%200%206M21%2020a6%206%200%200%200-4-5.6%22/%3E%3C/svg%3E"); }
-.nav-item[data-section="logs"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%203h9l4%204v14H6z%22/%3E%3Cpath%20d%3D%22M15%203v4h4M9%2012h7M9%2016h7%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%203h9l4%204v14H6z%22/%3E%3Cpath%20d%3D%22M15%203v4h4M9%2012h7M9%2016h7%22/%3E%3C/svg%3E"); }
-.nav-item[data-section="transcoding"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%2218%22%20height%3D%2214%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M10%209l5%203-5%203z%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%2218%22%20height%3D%2214%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M10%209l5%203-5%203z%22/%3E%3C/svg%3E"); }
-.nav-item[data-section="plugins"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%203v4M15%203v4M7%207h10v5a5%205%200%200%201-10%200zM12%2017v4%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%203v4M15%203v4M7%207h10v5a5%205%200%200%201-10%200zM12%2017v4%22/%3E%3C/svg%3E"); }
-.nav-item[data-section="settings"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h10M18%207h2M4%2017h2M10%2017h10%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%227%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h10M18%207h2M4%2017h2M10%2017h10%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%227%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3C/svg%3E"); }
+html.silo-dsm .nav-item[data-section="dashboard"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2212%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%223%22%20y%3D%2216%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2212%22%20width%3D%227%22%20height%3D%229%22%20rx%3D%221.5%22/%3E%3Crect%20x%3D%223%22%20y%3D%2216%22%20width%3D%227%22%20height%3D%225%22%20rx%3D%221.5%22/%3E%3C/svg%3E"); }
+html.silo-dsm .nav-item[data-section="users"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22/%3E%3Cpath%20d%3D%22M3%2020a6%206%200%200%201%2012%200M16%205a3%203%200%200%201%200%206M21%2020a6%206%200%200%200-4-5.6%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22/%3E%3Cpath%20d%3D%22M3%2020a6%206%200%200%201%2012%200M16%205a3%203%200%200%201%200%206M21%2020a6%206%200%200%200-4-5.6%22/%3E%3C/svg%3E"); }
+html.silo-dsm .nav-item[data-section="logs"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%203h9l4%204v14H6z%22/%3E%3Cpath%20d%3D%22M15%203v4h4M9%2012h7M9%2016h7%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%203h9l4%204v14H6z%22/%3E%3Cpath%20d%3D%22M15%203v4h4M9%2012h7M9%2016h7%22/%3E%3C/svg%3E"); }
+html.silo-dsm .nav-item[data-section="transcoding"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%2218%22%20height%3D%2214%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M10%209l5%203-5%203z%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%2218%22%20height%3D%2214%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M10%209l5%203-5%203z%22/%3E%3C/svg%3E"); }
+html.silo-dsm .nav-item[data-section="plugins"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%203v4M15%203v4M7%207h10v5a5%205%200%200%201-10%200zM12%2017v4%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%203v4M15%203v4M7%207h10v5a5%205%200%200%201-10%200zM12%2017v4%22/%3E%3C/svg%3E"); }
+html.silo-dsm .nav-item[data-section="settings"]::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h10M18%207h2M4%2017h2M10%2017h10%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%227%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h10M18%207h2M4%2017h2M10%2017h10%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%227%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2217%22%20r%3D%222%22/%3E%3C/svg%3E"); }
 
 /* Content */
-.content { padding: 24px 28px 36px; }
+html.silo-dsm .content { padding: 24px 28px 36px; }
 
-.topbar { border-bottom: 0; padding-bottom: 0; margin-bottom: 16px; }
-.topbar h1 { font-size: 26px; color: #17233b; }
+html.silo-dsm .topbar { border-bottom: 0; padding-bottom: 0; margin-bottom: 16px; }
+html.silo-dsm .topbar h1 { font-size: 26px; color: #17233b; }
 
-.panel,
-.table-wrap,
-.stat-card,
-.cards .card {
+html.silo-dsm .panel,
+html.silo-dsm .table-wrap,
+html.silo-dsm .stat-card,
+html.silo-dsm .cards .card {
     border-color: #d6dee8;
     border-radius: 6px;
     box-shadow: 0 1px 2px rgba(15, 30, 60, .08);
 }
 
-.panel h2 { color: #17233b; }
+html.silo-dsm .panel h2 { color: #17233b; }
 
-.subblock { border-color: #e5e9ef; background: #f7f9fb; }
-.subblock legend { color: #1167c9; }
+html.silo-dsm .subblock { border-color: #e5e9ef; background: #f7f9fb; }
+html.silo-dsm .subblock legend { color: #1167c9; }
 
-.table th {
+html.silo-dsm .table th {
     background: #f7f9fb;
     color: #6b7a90;
     border-bottom-color: #dfe5ec;
 }
 
-.table tr:hover td { background: #f5f9ff; }
+html.silo-dsm .table tr:hover td { background: #f5f9ff; }
 
-.mono { color: #30415e; }
+html.silo-dsm .mono { color: #30415e; }
 
 /* Fields */
-.field span { color: #30415e; font-weight: 600; font-size: 13px; }
+html.silo-dsm .field span { color: #30415e; font-weight: 600; font-size: 13px; }
 
-.input,
-.lang-select {
+html.silo-dsm .input,
+html.silo-dsm .lang-select {
     border-color: #bfc4cb;
     border-radius: 3px;
     background-color: #fff;
 }
 
-.input:focus,
-.lang-select:focus {
+html.silo-dsm .input:focus,
+html.silo-dsm .lang-select:focus {
     border-color: #1677ff;
     box-shadow: 0 0 0 2px rgba(22, 119, 255, .12);
 }
 
 /* Buttons: blue primary, white outlined secondary */
-.btn {
+html.silo-dsm .btn {
     color: #fff;
     border-radius: 4px;
     font-weight: 400;
     min-height: 34px;
 }
 
-.btn-secondary,
-.btn-icon,
-.btn-sm-icon {
+html.silo-dsm .btn-secondary,
+html.silo-dsm .btn-icon,
+html.silo-dsm .btn-sm-icon {
     background: #fff;
     color: #30415e;
     border-color: #bfc4cb;
 }
 
-.btn-secondary:hover,
-.btn-icon:hover,
-.btn-sm-icon:hover {
+html.silo-dsm .btn-secondary:hover,
+html.silo-dsm .btn-icon:hover,
+html.silo-dsm .btn-sm-icon:hover {
     background: #edf5ff;
     border-color: #9fb6d6;
     color: #1167c9;
 }
 
-.btn-sm { min-height: 28px; }
+html.silo-dsm .btn-sm { min-height: 28px; }
 
-.btn-danger { background: #fff; color: var(--silo-danger); }
-.btn-danger:hover { background: #d32f2f; color: #fff; }
+html.silo-dsm .btn-danger { background: #fff; color: var(--silo-danger); }
+html.silo-dsm .btn-danger:hover { background: #d32f2f; color: #fff; }
 
 /* Check boxes */
-input[type="checkbox"] { background: #fff; }
-input[type="checkbox"]:checked::after { border-color: #fff; }
-label:has(input[type="checkbox"]:hover),
-label:has(input[type="radio"]:hover) { color: inherit; }
+html.silo-dsm input[type="checkbox"] { background: #fff; }
+html.silo-dsm input[type="checkbox"]:checked::after { border-color: #fff; }
+html.silo-dsm label:has(input[type="checkbox"]:hover),
+html.silo-dsm label:has(input[type="radio"]:hover) { color: inherit; }
 
 /* Dialogs */
-.modal-overlay {
+html.silo-dsm .modal-overlay {
     background: rgba(20, 30, 45, .38);
     backdrop-filter: none;
 }
 
-.modal {
+html.silo-dsm .modal {
     border-color: #d6dee8;
     border-radius: 6px;
     box-shadow: 0 8px 28px rgba(15, 30, 60, .18);
 }
 
-.modal-header { border-bottom-color: #e5e9ef; }
+html.silo-dsm .modal-header { border-bottom-color: #e5e9ef; }
 
-.modal-footer,
-.modal-actions {
+html.silo-dsm .modal-footer,
+html.silo-dsm .modal-actions {
     border-top-color: #e5e9ef;
     background: #f7f9fb;
 }
 
-.modal-body { color: #30415e; }
+html.silo-dsm .modal-body { color: #30415e; }
 
 /* Notifications */
-.toast { box-shadow: 0 8px 28px rgba(15, 30, 60, .18); }
+html.silo-dsm .toast { box-shadow: 0 8px 28px rgba(15, 30, 60, .18); }
 
-.offline-banner { background: rgba(241, 245, 249, .94); }
-.offline-card { border-top-width: 4px; }
+html.silo-dsm .offline-banner { background: rgba(241, 245, 249, .94); }
+html.silo-dsm .offline-card { border-top-width: 4px; }
 
 /* Badges */
-.badge-warn { background: #fff3d6; color: #8a5a00; }
-.badge-owner { background: #e5f1ff; color: #1167c9; }
-.badge-admin { background: #dcf3e5; color: #16803c; }
-.badge-ok { color: #16803c; }
-.badge-user { background: #eef1f5; color: #4b5b73; }
+html.silo-dsm .badge-warn { background: #fff3d6; color: #8a5a00; }
+html.silo-dsm .badge-owner { background: #e5f1ff; color: #1167c9; }
+html.silo-dsm .badge-admin { background: #dcf3e5; color: #16803c; }
+html.silo-dsm .badge-ok { color: #16803c; }
+html.silo-dsm .badge-user { background: #eef1f5; color: #4b5b73; }
 
 /* Login */
-.login-card {
+html.silo-dsm .login-card {
     border-color: #d6dee8;
     border-radius: 6px;
     border-top: 4px solid #1677ff;
     box-shadow: 0 8px 28px rgba(15, 30, 60, .12);
 }
 
-.login-brand h1 { letter-spacing: 0; font-size: 20px; }
 
 @media (max-width: 860px) {
-    .sidebar-overlay { background: rgba(20, 30, 45, .3); }
+    html.silo-dsm .sidebar-overlay { background: rgba(20, 30, 45, .3); }
+
 }

@@ -28,7 +28,9 @@ var DEFAULT_SETTINGS = {
     url: "http://127.0.0.1:8090",
     username: "",
     password: "",
-    auto: true,
+    // Off until the owner turns it on: the plugin is built into Silo DSM and
+    // must not start copying torrents by itself.
+    auto: false,
     interval_min: 15
 };
 
@@ -85,10 +87,15 @@ function normalizeUrl(url) {
     return url.replace(/\/+$/, "");
 }
 
-// Returns {ok, list, error}.
+// Returns {ok, list} or {ok: false, code, error}. The page translates code;
+// error is the English text with details (also for the log).
+function fail(code, error) {
+    return { ok: false, code: code, error: error };
+}
+
 function fetchTorrServerList(settings) {
     var url = normalizeUrl(settings.url);
-    if (!url) return { ok: false, error: "TorrServer address is not set" };
+    if (!url) return fail("no_url", "TorrServer address is not set");
 
     var headers = { "Content-Type": "application/json" };
     if (settings.username) {
@@ -101,19 +108,19 @@ function fetchTorrServerList(settings) {
         resp = ts.http.post(url + "/torrents", { action: "list" },
             { headers: headers, timeout: HTTP_TIMEOUT_MS });
     } catch (e) {
-        return { ok: false, error: "TorrServer is not reachable: " + String(e) };
+        return fail("unreachable", "TorrServer is not reachable: " + String(e));
     }
 
-    if (resp.status === 401) return { ok: false, error: "TorrServer rejected the login (401)" };
-    if (!resp.ok) return { ok: false, error: "TorrServer answered HTTP " + resp.status };
+    if (resp.status === 401) return fail("unauthorized", "TorrServer rejected the login (401)");
+    if (!resp.ok) return fail("http", "TorrServer answered HTTP " + resp.status);
 
     var list;
     try { list = resp.json(); } catch (e) {
-        return { ok: false, error: "TorrServer answered something that is not a torrent list" };
+        return fail("bad_answer", "TorrServer answered something that is not a torrent list");
     }
     if (!list) list = [];
     if (!(list instanceof Array)) {
-        return { ok: false, error: "TorrServer answered something that is not a torrent list" };
+        return fail("bad_answer", "TorrServer answered something that is not a torrent list");
     }
     return { ok: true, list: list };
 }
@@ -140,12 +147,13 @@ function siloHashes() {
 function runImport(mode) {
     var settings = getSettings();
     var state = {
-        last_run: Date.now(), last_mode: mode, ok: false, error: "",
+        last_run: Date.now(), last_mode: mode, ok: false, code: "", error: "",
         found: 0, added: 0, skipped: 0, failed: 0
     };
 
     var res = fetchTorrServerList(settings);
     if (!res.ok) {
+        state.code = res.code;
         state.error = res.error;
         saveJSON("state", state);
         console.log("[TS Import] " + mode + ": " + res.error);
@@ -188,6 +196,7 @@ function runImport(mode) {
 
     saveSeen(seen);
     state.ok = state.failed === 0;
+    state.code = errors.length ? "add_failed" : "";
     state.error = errors.join("; ");
     saveJSON("state", state);
     console.log("[TS Import] " + mode + ": found " + state.found + ", added " + state.added +
@@ -267,7 +276,7 @@ ts.web.post("/api/settings", function(req, res) {
 ts.web.post("/api/test", function(req, res) {
     if (!isOwner(req)) return forbidden(res);
     var r = fetchTorrServerList(getSettings());
-    if (!r.ok) return { ok: false, error: r.error };
+    if (!r.ok) return { ok: false, code: r.code, error: r.error };
     return { ok: true, count: r.list.length };
 });
 

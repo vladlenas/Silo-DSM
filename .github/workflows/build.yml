@@ -90,7 +90,7 @@ jobs:
       - name: Checksums
         run: |
           cd spk
-          sha256sum *.spk *.zip > SHA256SUMS
+          sha256sum *.spk > SHA256SUMS
           cat SHA256SUMS
 
       - name: Upload SPK packages as artifact
@@ -99,7 +99,6 @@ jobs:
           name: Silo-DSM-${{ needs.check-version.outputs.version }}
           path: |
             spk/*.spk
-            spk/*.zip
             spk/SHA256SUMS
           if-no-files-found: error
 
@@ -143,7 +142,7 @@ jobs:
           # Silo is early development: every release is a pre-release, and
           # the packages carry beta="yes" (distributed through SSpkS).
           gh release create "v${VERSION}" \
-            spk/*.spk spk/*.zip spk/SHA256SUMS \
+            spk/*.spk spk/SHA256SUMS \
             --prerelease \
             --title "Silo DSM v${VERSION} (${SILO_VERSION})" \
             ${NOTES}

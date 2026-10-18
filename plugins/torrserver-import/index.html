@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="plugin.tsimport.page_title">TorrServer Import - Silo</title>
+    <title data-i18n="plugin.tsimport.page_title">Import from TorrServer – Silo</title>
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
     <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/silo-look.js"></script>
     <script src="/i18n.js"></script>
     <style>
         .page-wrap { display: flex; justify-content: center; padding: 24px 32px; min-height: 100vh; }
@@ -35,28 +36,28 @@
 <div class="page-wrap">
     <div class="page-inner">
         <header class="topbar">
-            <h1 data-i18n="plugin.tsimport.title">TorrServer Import</h1>
+            <h1 data-i18n="plugin.tsimport.title">Import from TorrServer</h1>
             <a href="/" class="btn btn-secondary btn-sm" data-i18n="plugin.tsimport.back">Back</a>
         </header>
         <section id="view">
             <div class="panel">
                 <h2 data-i18n="plugin.tsimport.import_title">Import</h2>
-                <p class="hint" data-i18n="plugin.tsimport.import_hint">Adds to Silo every torrent from TorrServer that Silo does not have yet, with its title, poster and category.</p>
+                <p class="hint" data-i18n="plugin.tsimport.import_hint">Adds the TorrServer torrents that Silo does not have yet, with their titles, posters and categories.</p>
                 <div class="row">
-                    <button class="btn" id="btn-import" type="button" data-i18n="plugin.tsimport.import_now">Import now</button>
+                    <button class="btn" id="btn-import" type="button" data-i18n="plugin.tsimport.import_now">Import</button>
                 </div>
                 <div class="stats">
                     <div class="stat"><div class="num" id="st-found">–</div><div class="lbl" data-i18n="plugin.tsimport.found">In TorrServer</div></div>
                     <div class="stat"><div class="num" id="st-added">–</div><div class="lbl" data-i18n="plugin.tsimport.added">Added</div></div>
                     <div class="stat"><div class="num" id="st-skipped">–</div><div class="lbl" data-i18n="plugin.tsimport.skipped">Skipped</div></div>
-                    <div class="stat"><div class="num" id="st-failed">–</div><div class="lbl" data-i18n="plugin.tsimport.failed">Errors</div></div>
+                    <div class="stat"><div class="num" id="st-failed">–</div><div class="lbl" data-i18n="plugin.tsimport.failed">Failed</div></div>
                 </div>
                 <p class="hint" id="last-run"></p>
                 <p class="hint" id="last-error"></p>
             </div>
 
             <div class="panel">
-                <h2 data-i18n="plugin.tsimport.settings_title">TorrServer</h2>
+                <h2 data-i18n="plugin.tsimport.settings_title">Connection to TorrServer</h2>
                 <div class="form-grid">
                     <label for="f-url" data-i18n="plugin.tsimport.url">Address</label>
                     <input class="input" id="f-url" type="text" placeholder="http://127.0.0.1:8090">
@@ -65,18 +66,18 @@
                     <label for="f-pass" data-i18n="plugin.tsimport.password">Password</label>
                     <input class="input" id="f-pass" type="password" autocomplete="new-password">
                     <span></span>
-                    <label class="check"><input type="checkbox" id="f-clear"> <span data-i18n="plugin.tsimport.clear_password">Remove the saved password</span></label>
+                    <label class="check"><input type="checkbox" id="f-clear"> <span data-i18n="plugin.tsimport.clear_password">Forget the saved password</span></label>
                 </div>
-                <p class="hint" data-i18n="plugin.tsimport.password_hint">Leave the password empty to keep the saved one. Login and password are those of TorrServer (its authentication), not of Silo.</p>
+                <p class="hint" data-i18n="plugin.tsimport.password_hint">Leave the field empty to keep the saved password. Username and password are only needed if TorrServer has authentication turned on.</p>
 
-                <h2 data-i18n="plugin.tsimport.auto_title">Automatic scan</h2>
+                <h2 data-i18n="plugin.tsimport.auto_title">Scheduled import</h2>
                 <div class="form-grid">
                     <span></span>
-                    <label class="check"><input type="checkbox" id="f-auto"> <span data-i18n="plugin.tsimport.auto">Scan TorrServer automatically</span></label>
-                    <label for="f-interval" data-i18n="plugin.tsimport.interval">Every (minutes)</label>
+                    <label class="check"><input type="checkbox" id="f-auto"> <span data-i18n="plugin.tsimport.auto">Check TorrServer on a schedule</span></label>
+                    <label for="f-interval" data-i18n="plugin.tsimport.interval">Interval, minutes</label>
                     <input class="input" id="f-interval" type="number" min="1" max="1440" value="15">
                 </div>
-                <p class="hint" data-i18n="plugin.tsimport.auto_hint">The automatic scan adds only torrents it has not seen before: a torrent deleted in Silo is not added back. It runs at Silo start and is woken every minute by Silo DSM.</p>
+                <p class="hint" data-i18n="plugin.tsimport.auto_hint">Only new torrents are added: a torrent you deleted in Silo does not come back. The check runs when Silo starts and then at the set interval.</p>
                 <p class="hint" id="next-run"></p>
 
                 <div class="row">

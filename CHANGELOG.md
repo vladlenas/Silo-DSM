@@ -5,16 +5,29 @@ The top entry is used as the GitHub release notes; keep its version equal to
 
 ## Unreleased
 
+### Added
+
+- **DSM Style UI**, a built-in Silo theme and the main page after
+  installation: white side panel with categories (movies, series, music,
+  other, no category) and counters, search, toolbar, DSM-like dialogs. The
+  admin panel and the login page are light with it, with section icons and
+  the package icon. Built on Silo's own library scripts.
+- Silo's own **Default Web UI** stays built in and unchanged: admin panel →
+  Plugins → "Make theme" brings the dark look back everywhere.
+- **TorrServer Import is built in**: listed in the admin panel and in the
+  library menu right after installation, no zip to upload. Scheduled import is
+  off until it is turned on.
+
 ### Changed
 
-- **DSM look built in.** Silo is compiled with a light DSM-style interface,
-  nothing to install:
-  - library page: white side panel with categories (movies, series, music,
-    other, no category) and counters, search, toolbar, DSM-like dialogs;
-  - admin panel and login page in the same style, with section icons;
-  - the package icon instead of Silo's logo (tab icon, login, admin panel).
-  Silo's library scripts are used unchanged. The build stops with a clear
-  message when a Silo update no longer fits the new page.
+- TorrServer Import 1.1.0: clearer Russian and English texts; connection
+  errors are translated (wrong address, TorrServer not running, wrong login).
+
+### Removed
+
+- The plugin zip is no longer attached to releases (built in now). After the
+  update, plugins `dsm-ui` and `torrserver-import` uploaded by hand are
+  replaced by the built-in ones; their settings are kept.
 
 ## 0.7.1 (2026-10-17)
 

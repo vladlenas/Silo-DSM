@@ -54,22 +54,28 @@ status page. A permission error is usually fixed by reinstalling the package.
 
 ## Import from TorrServer
 
-`torrserver-import-<version>.zip` (attached to each release) is a Silo plugin
-that copies the torrent list from TorrServer (e.g. TorrServer DSM on 8090) with
-title, poster and category.
+**TorrServer Import** is built in (admin panel → Plugins, menu item in the
+library). It copies the torrent list from TorrServer (e.g. TorrServer DSM on
+8090) with title, poster and category.
 
-1. Silo → admin panel → **Plugins** → upload the zip and enable it.
+1. Open **Import from TorrServer** in the library menu.
 2. Enter the TorrServer address (`http://127.0.0.1:8090` on the same NAS) and
    its login if it has one; **Test connection**.
-3. **Import now** adds everything missing. **Automatic scan** (every 15 min by
-   default) adds only new torrents; nothing is ever deleted.
+3. **Import** adds everything missing. **Scheduled import** (off until you
+   turn it on) adds only new torrents; nothing is ever deleted.
 
-## DSM look
+Not needed? Disable it in the admin panel → Plugins.
 
-Silo in this package looks like DSM and the package window: a light library
-page with categories, counters and search, and the same style in the admin
-panel and on the login page. Nothing to install: the look is compiled into
-Silo (`overlay/`), and Silo's own library scripts are used unchanged.
+## Look
+
+Silo in this package has two built-in themes:
+
+- **DSM Style UI** (main page after installation): a light library in the
+  style of DSM and of the package window, with categories, counters and
+  search; the admin panel and the login page are light too.
+- **Default Web UI**: Silo's own dark look, unchanged.
+
+To switch: admin panel → Plugins → **Make theme** on the other one.
 
 ## Troubleshooting
 
@@ -83,15 +89,15 @@ Silo (`overlay/`), and Silo's own library scripts are used unchanged.
 ## Building
 
 ```sh
-make        # spk/Silo-DSM-<version>-amd64.spk + spk/torrserver-import-<version>.zip
+make        # spk/Silo-DSM-<version>-amd64.spk
 make clean
 ```
 
-Needs Go 1.26, git, xz and Python 3; `overlay/apply.py` puts the DSM look
-into the Silo source before compiling and stops the build when an upstream
-change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
+Needs Go 1.26, git, xz and Python 3; `overlay/apply.py` adds DSM Style UI
+and TorrServer Import to the Silo source as built-in plugins before compiling
+and stops the build when an upstream change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
 `PKG_VERSION`; a change of `PKG_VERSION` on `main` builds and publishes a
-GitHub pre-release with the `.spk`, the plugin zip and `SHA256SUMS`.
+GitHub pre-release with the `.spk` and `SHA256SUMS`.
 
 Tests:
 

@@ -1,6 +1,6 @@
 'use strict';
 
-// Silo DSM: DSM look for Silo's built-in Default Web UI.
+// Silo DSM: DSM Style UI, built on the scripts of Silo's Default Web UI.
 //
 // The scripts of the Default Web UI (cards, add, info, cache, transcoding,
 // menu) do the work; this file only adds what the DSM layout has on top: the category list with counters, the search field, a flat
@@ -12,6 +12,10 @@
 
 (function () {
     var STORE_KEY = 'dsm-ui.category';
+
+    // The admin panel and the login page are light while this theme is the
+    // main page; /js/silo-look.js checks it and remembers the answer here.
+    try { localStorage.setItem('silo-look', 'dsm'); } catch (e) { /* storage off */ }
 
     function tr(key, fallback) {
         try {

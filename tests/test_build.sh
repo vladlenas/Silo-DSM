@@ -27,7 +27,7 @@ cat > "$TMP/bin/go" <<'EOF'
 #!/bin/bash
 [ "$1" = version ] && { echo "go version go1.26.0 fake"; exit 0; }
 out=""; while [ $# -gt 0 ]; do case "$1" in -o) out=$2; shift;; esac; shift; done
-look=no; [ -f internal/plugin/default_ui/js/dsm.js ] && grep -q 'Silo DSM: light DSM look' internal/web/static/css/style.css && look=yes
+look=no; [ -f internal/plugin/dsm_ui/js/dsm.js ] && [ -f internal/plugin/torrserver_import/service.js ] && grep -q 'all:dsm_ui' internal/plugin/builtin.go && look=yes
 echo "$GOOS/$GOARCH/$GOARM/$CGO_ENABLED $(git rev-parse HEAD) look=$look" >> "$GO_LOG"
 printf '\177ELFfake' > "$out"
 EOF
@@ -36,7 +36,7 @@ export PATH="$TMP/bin:$PATH" GO_LOG="$TMP/go.log" SILO_REPO="file://$UP"
 
 fresh() {
     rm -rf "$TMP/w"; mkdir "$TMP/w"
-    cp -r "$ROOT/build-package.sh" "$ROOT/src" "$ROOT/overlay" "$TMP/w/"
+    cp -r "$ROOT/build-package.sh" "$ROOT/src" "$ROOT/overlay" "$ROOT/plugins" "$TMP/w/"
     cd "$TMP/w" || exit 1
 }
 build() { ./build-package.sh Silo.9 "$FIRST" "$1" 0.1.9 >"$TMP/out.log" 2>&1; }

@@ -3,7 +3,7 @@
 # minutes. Title, poster and category are taken over.
 id: "torrserver-import"
 name: "TorrServer Import"
-version: "1.0.0"
+version: "1.1.0"
 author: "vladlenas"
 description: "Imports torrents from TorrServer (MatriX) into Silo: on demand or automatically every N minutes"
 entry: "service.js"

@@ -30,6 +30,17 @@ function api(path, body) {
     });
 }
 
+// Error from the plugin: translated by its code, the English details after it.
+function errorText(d) {
+    if (!d || (!d.code && !d.error)) return '';
+    var text = d.code ? t('plugin.tsimport.err_' + d.code, '') : '';
+    if (!text || text === 'plugin.tsimport.err_' + d.code) return d.error || d.code;
+    if (d.code === 'http' || d.code === 'unreachable' || d.code === 'add_failed') {
+        return text + (d.error ? ' (' + d.error + ')' : '');
+    }
+    return text;
+}
+
 function fmtTime(ms) {
     return ms ? new Date(ms).toLocaleString() : '–';
 }
@@ -39,13 +50,14 @@ function showState(st) {
     $('st-added').textContent = st.last_run ? st.added : '–';
     $('st-skipped').textContent = st.last_run ? st.skipped : '–';
     $('st-failed').textContent = st.last_run ? st.failed : '–';
-    var mode = st.last_mode === 'auto' ? t('plugin.tsimport.mode_auto', 'automatic') : t('plugin.tsimport.mode_manual', 'manual');
+    var mode = st.last_mode === 'auto' ? t('plugin.tsimport.mode_auto', 'scheduled') : t('plugin.tsimport.mode_manual', 'manual');
     $('last-run').textContent = st.last_run
         ? t('plugin.tsimport.last_run', 'Last import:') + ' ' + fmtTime(st.last_run) + ' (' + mode + ')'
         : t('plugin.tsimport.never', 'No import yet.');
     var err = $('last-error');
-    err.textContent = st.error || '';
-    err.className = 'hint ' + (st.error ? 'msg-err' : '');
+    var msg = errorText(st);
+    err.textContent = msg;
+    err.className = 'hint ' + (msg ? 'msg-err' : '');
 }
 
 function load() {
@@ -59,8 +71,8 @@ function load() {
         $('f-auto').checked = !!s.auto;
         $('f-interval').value = s.interval_min;
         $('next-run').textContent = s.auto
-            ? t('plugin.tsimport.next_run', 'Next automatic scan:') + ' ' + fmtTime(d.next_run)
-            : t('plugin.tsimport.auto_off', 'Automatic scan is off.');
+            ? t('plugin.tsimport.next_run', 'Next check:') + ' ' + fmtTime(d.next_run)
+            : t('plugin.tsimport.auto_off', 'Scheduled import is off.');
         showState(d.state);
     }).catch(function(e) { showToast(e.message); });
 }
@@ -74,7 +86,7 @@ function save() {
         auto: $('f-auto').checked,
         interval_min: parseInt($('f-interval').value, 10)
     }).then(function() {
-        showToast(t('plugin.tsimport.saved', 'Saved'));
+        showToast(t('plugin.tsimport.saved', 'Settings saved'));
         load();
     }).catch(function(e) {
         var key = e.message === 'url_invalid' ? 'plugin.tsimport.url_invalid'
@@ -86,12 +98,12 @@ function save() {
 
 function test() {
     var out = $('test-result');
-    out.textContent = t('plugin.tsimport.testing', 'Connecting...');
+    out.textContent = t('plugin.tsimport.testing', 'Connecting…');
     out.className = 'hint';
     save().then(function() { return api('test', {}); }).then(function(d) {
         out.textContent = d.ok
             ? t('plugin.tsimport.test_ok', 'Connected. Torrents in TorrServer:') + ' ' + d.count
-            : d.error;
+            : errorText(d);
         out.className = 'hint ' + (d.ok ? 'msg-ok' : 'msg-err');
     }).catch(function(e) { out.textContent = e.message; out.className = 'hint msg-err'; });
 }

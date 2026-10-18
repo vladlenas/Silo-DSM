@@ -27,10 +27,20 @@ class OverlayTests(unittest.TestCase):
         self.src = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.src)
         silo_fixture.make(self.src)
+        self.upstream_default_ui = self.snapshot("internal/plugin/default_ui")
+
+    def snapshot(self, rel):
+        files = {}
+        base = self.path(rel)
+        for root, _, names in os.walk(base):
+            for name in names:
+                p = os.path.join(root, name)
+                files[os.path.relpath(p, base)] = read(p)
+        return files
 
     def git_commit(self):
-        run = lambda *a: subprocess.check_call(["git", "-C", self.src] + list(a),
-                                               stdout=subprocess.DEVNULL)
+        def run(*args):
+            subprocess.check_call(["git", "-C", self.src] + list(args), stdout=subprocess.DEVNULL)
         run("init", "-q")
         run("add", "-A")
         run("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "silo")
@@ -44,36 +54,83 @@ class OverlayTests(unittest.TestCase):
     def path(self, rel):
         return os.path.join(self.src, rel)
 
-    def test_applies_the_look(self):
+    def test_default_ui_stays_untouched(self):
         self.assertEqual(self.apply(), (0, ""))
-        css = read(self.path("internal/web/static/css/style.css"))
-        self.assertIn("--silo-bg: #14171a", css)            # upstream kept
-        self.assertIn("--silo-bg: #f1f5f9", css)            # light tokens after it
-        self.assertLess(css.index("#14171a"), css.index("#f1f5f9"))
+        self.assertEqual(self.snapshot("internal/plugin/default_ui"), self.upstream_default_ui)
 
-        ui = "internal/plugin/default_ui/"
+    def test_dsm_ui_is_a_builtin_theme_built_on_the_default_ui_scripts(self):
+        self.assertEqual(self.apply(), (0, ""))
+        ui = "internal/plugin/dsm_ui/"
+        self.assertIn('id: "dsm-ui"', read(self.path(ui + "info.yaml")))
+        self.assertIn("theme_ui: true", read(self.path(ui + "info.yaml")))
         self.assertIn('src="js/dsm.js"', read(self.path(ui + "index.html")))
+        self.assertTrue(os.path.exists(self.path(ui + "service.js")))
         self.assertTrue(os.path.exists(self.path(ui + "css/dsm.css")))
         self.assertTrue(os.path.exists(self.path(ui + "img/ico-movie.svg")))
-        self.assertEqual(read(self.path(ui + "js/app.js")), "// upstream app.js\n")  # logic untouched
-
+        # upstream scripts copied unchanged, test files left out
+        self.assertEqual(read(self.path(ui + "js/app.js")), "// upstream app.js\n")
+        self.assertFalse(os.path.exists(self.path(ui + "js/ui_test.js")))
+        # own icon replaces the upstream logo in the copy only
+        with open(self.path(ui + "img/logo.png"), "rb") as f:
+            self.assertTrue(f.read().startswith(b"\x89PNG"))
         ru = json.loads(read(self.path(ui + "i18n/ru.json")))
         self.assertEqual(ru["library"], "Библиотека")
         self.assertEqual(ru["dsm_search"], "Поиск")
 
-        self.assertIn("<h1>TorrServer Silo</h1>", read(self.path("internal/web/static/login.html")))
-        self.assertIn("TorrServer Silo</span>", read(self.path("internal/plugin/admin_ui/index.html")))
-        self.assertNotEqual(read(self.path("internal/web/static/img/favicon.svg")), "upstream image\n")
-        manifest = json.loads(read(self.path("internal/web/static/img/site.webmanifest")))
-        self.assertEqual(manifest["theme_color"], "#f1f5f9")
+    def test_builtins_registered_with_dsm_ui_first(self):
+        self.assertEqual(self.apply(), (0, ""))
+        go = read(self.path("internal/plugin/builtin.go"))
+        self.assertIn("//go:embed all:dsm_ui", go)
+        self.assertIn("//go:embed all:torrserver_import", go)
+        order = [go.index('"dsm_ui"}'), go.index('"default_ui"}'),
+                 go.index('"admin_ui"}'), go.index('"torrserver_import"}')]
+        self.assertEqual(order, sorted(order))
+
+    def test_torrserver_import_is_built_in(self):
+        self.assertEqual(self.apply(), (0, ""))
+        plugin = "internal/plugin/torrserver_import/"
+        self.assertIn('id: "torrserver-import"', read(self.path(plugin + "info.yaml")))
+        self.assertTrue(os.path.exists(self.path(plugin + "service.js")))
+        self.assertTrue(os.path.exists(self.path(plugin + "i18n/ru.json")))
+
+    def test_light_style_only_under_the_dsm_class(self):
+        self.assertEqual(self.apply(), (0, ""))
+        css = read(self.path("internal/web/static/css/style.css"))
+        self.assertTrue(css.startswith(":root { --silo-bg: #14171a; }"))  # upstream kept first
+        added = css[css.index("Silo DSM: light DSM look"):]
+        self.assertNotIn(":root", added.split("*/", 1)[1])
+        self.assertIn("html.silo-dsm {", added)
+        for line in added.splitlines():
+            if line.rstrip().endswith("{") and not line.startswith("@media"):
+                self.assertIn("html.silo-dsm", line)
+
+        script = '<script src="/js/silo-look.js"></script>'
+        self.assertTrue(os.path.exists(self.path("internal/web/static/js/silo-look.js")))
+        for page in ("internal/web/static/login.html", "internal/plugin/admin_ui/index.html"):
+            html = read(self.path(page))
+            self.assertIn(script, html)
+            self.assertLess(html.index(script), html.index("</head>"))
+
+    def test_silo_branding_kept_for_its_own_theme(self):
+        self.assertEqual(self.apply(), (0, ""))
+        self.assertIn("<h1>SILO</h1>", read(self.path("internal/web/static/login.html")))
+        self.assertIn(">SILO</span>", read(self.path("internal/plugin/admin_ui/index.html")))
+        self.assertEqual(read(self.path("internal/web/static/img/favicon.svg")), "upstream image\n")
+        with open(self.path("internal/web/static/img/dsm-logo.png"), "rb") as f:
+            self.assertTrue(f.read().startswith(b"\x89PNG"))
+        css = read(self.path("internal/web/static/css/style.css"))
+        self.assertIn('content: "TorrServer Silo"', css)
 
     def test_twice_is_once(self):
         self.git_commit()
         self.assertEqual(self.apply()[0], 0)
-        first = read(self.path("internal/web/static/css/style.css"))
+        first = {rel: read(self.path(rel)) for rel in (
+            "internal/web/static/css/style.css", "internal/plugin/builtin.go",
+            "internal/plugin/admin_ui/index.html", "internal/web/static/login.html")}
         self.assertEqual(self.apply()[0], 0)
-        self.assertEqual(read(self.path("internal/web/static/css/style.css")), first)
-        self.assertEqual(first.count("Silo DSM: light DSM look"), 1)
+        for rel, text in first.items():
+            self.assertEqual(read(self.path(rel)), text, rel)
+        self.assertEqual(first["internal/plugin/builtin.go"].count("all:dsm_ui"), 1)
 
     def test_new_element_id_upstream_stops_the_build(self):
         with open(self.path("internal/plugin/default_ui/js/info.js"), "a") as f:
@@ -89,9 +146,16 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("player.js", err)
 
-    def test_changed_branding_stops_the_build(self):
+    def test_changed_builtin_list_stops_the_build(self):
+        with open(self.path("internal/plugin/builtin.go"), "w") as f:
+            f.write("package plugin\n")
+        code, err = self.apply()
+        self.assertEqual(code, 1)
+        self.assertIn("builtin.go", err)
+
+    def test_changed_page_head_stops_the_build(self):
         with open(self.path("internal/web/static/login.html"), "w") as f:
-            f.write("<h1>Silo</h1>\n")
+            f.write("<html><head></head><body><h1>SILO</h1></body></html>\n")
         code, err = self.apply()
         self.assertEqual(code, 1)
         self.assertIn("login.html", err)
