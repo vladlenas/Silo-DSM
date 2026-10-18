@@ -115,6 +115,10 @@ class YamlTests(Base):
         self.assertEqual(loaded["port"], 8100)
         self.assertNotIn("cache_size_mb", loaded)
 
+    def test_ffprobe_gets_time_for_a_waking_torrent(self):
+        config = parse_config(sc.render_yaml(sc.DEFAULTS, self.var))
+        self.assertEqual(int(config["ffmpeg"]["probe_timeout_sec"]), 90)
+
     def test_log_goes_to_stdout_only(self):
         # Silo prints every line to stdout too; a file would double the log.
         config = parse_config(sc.render_yaml(sc.DEFAULTS, self.var))

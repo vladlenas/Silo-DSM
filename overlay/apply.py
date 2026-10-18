@@ -18,6 +18,9 @@ added to the source tree right before `go build`:
   html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme;
   it also shows the package icon and "TorrServer Silo" instead of Silo's
   logo. With Silo's own theme every page looks exactly as upstream made it.
+* Fixes for Silo bugs that upstream has not fixed yet (core_fixes below):
+  each one is a small, exact change; when upstream changes those lines the
+  build stops, and the fix is checked against the new code or dropped.
 
 The tree is reset to the commit first, so running it twice is the same as
 running it once. Anything that does not match what this script expects (a
@@ -209,6 +212,36 @@ var {} embed.FS
     replace_once(go, BUILTIN_SOURCES, '\t\t{dsmUIFiles, "dsm_ui"},\n' + BUILTIN_SOURCES + sources)
 
 
+# (file, exact upstream text, replacement, why)
+CORE_FIXES = (
+    (
+        "internal/web/api_hls.go",
+        "\toptions.Seek = startAt\n",
+        "\toptions.Seek = startAt\n"
+        "\t// Silo DSM: segments of a restarted process keep their numbers, so the\n"
+        "\t// segment the player asked for is the one ffmpeg writes.\n"
+        "\toptions.HLS.StartNumber = startIndex\n",
+        "after a seek ffmpeg restarted at seg0 while the player waited for segN",
+    ),
+    (
+        "internal/web/server.go",
+        'api := s.router.Group("/api", AuthMiddleware(s.userSvc))\n',
+        'api := s.router.Group("/api", AuthMiddleware(s.userSvc), siloDSMValidHash())\n',
+        "a short :hash made the torrent handlers panic",
+    ),
+)
+
+
+def core_fixes(src, overlay):
+    web = need(os.path.join(src, "internal/web"))
+    target = os.path.join(web, "silo_dsm_fixes.go")
+    if os.path.exists(target):
+        raise OverlayError("Silo already has internal/web/silo_dsm_fixes.go")
+    shutil.copyfile(os.path.join(overlay, "core", "silo_dsm_fixes.go"), target)
+    for rel, old, new, _why in CORE_FIXES:
+        replace_once(os.path.join(src, rel), old, new)
+
+
 def main(argv):
     if len(argv) not in (2, 3):
         print(__doc__.strip().splitlines()[2].strip(), file=sys.stderr)
@@ -222,6 +255,7 @@ def main(argv):
         dsm_ui(src, overlay)
         builtin_plugins(src, REPO)
         register_builtins(src)
+        core_fixes(src, overlay)
     except (OverlayError, OSError, ValueError, subprocess.CalledProcessError) as e:
         print("ERROR: DSM look: {}".format(e), file=sys.stderr)
         return 1

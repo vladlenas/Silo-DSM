@@ -133,6 +133,22 @@ class OverlayTests(unittest.TestCase):
         css = read(self.path("internal/web/static/css/style.css"))
         self.assertIn('content: "TorrServer Silo"', css)
 
+    def test_core_fixes(self):
+        self.assertEqual(self.apply(), (0, ""))
+        hls = read(self.path("internal/web/api_hls.go"))
+        self.assertIn("options.HLS.StartNumber = startIndex", hls)
+        self.assertLess(hls.index("options.Seek = startAt"), hls.index("options.HLS.StartNumber"))
+        server = read(self.path("internal/web/server.go"))
+        self.assertIn("AuthMiddleware(s.userSvc), siloDSMValidHash())", server)
+        self.assertIn("func siloDSMValidHash()", read(self.path("internal/web/silo_dsm_fixes.go")))
+
+    def test_changed_hls_code_stops_the_build(self):
+        with open(self.path("internal/web/api_hls.go"), "w") as f:
+            f.write("package web\n")
+        code, err = self.apply()
+        self.assertEqual(code, 1)
+        self.assertIn("api_hls.go", err)
+
     def test_twice_is_once(self):
         self.git_commit()
         self.assertEqual(self.apply()[0], 0)

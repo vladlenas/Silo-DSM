@@ -47,6 +47,7 @@ DB_NAME = "torrserver.db"
 # 8090 is TorrServer DSM's port: Silo gets its own so both can run.
 DEFAULT_PORT = 8095
 # The Helper listens on 127.0.0.1:42778 (TorrServer DSM's Helper uses 42777).
+PROBE_TIMEOUT_SEC = 90
 HELPER_PORT = 42778
 RESERVED_PORTS = {HELPER_PORT: "Web port is reserved for the Helper"}
 
@@ -292,6 +293,10 @@ def render_yaml(settings, var=None):
             ("threads", settings["ffmpeg_threads"]),
             ("hwaccel", settings["ffmpeg_hwaccel"]),
             ("hw_device", settings["ffmpeg_hw_device"]),
+            # Silo reads a file with ffprobe before transcoding it. A torrent
+            # that has just woken up may need longer than Silo's 30 s to
+            # deliver the first megabytes ("ffprobe failed: signal: killed").
+            ("probe_timeout_sec", PROBE_TIMEOUT_SEC),
         ]),
     ]
 
