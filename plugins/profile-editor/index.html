@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="plugin.profed.page_title">Transcoding profiles – Silo</title>
+    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/silo-look.js"></script>
+    <script src="/i18n.js"></script>
+    <style>
+        .wrap { max-width: 860px; margin: 0 auto; padding: 24px 20px 40px; }
+        .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+        .head h1 { font-size: 22px; }
+        .picker { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .picker select { flex: 1 1 220px; }
+        .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 16px; }
+        .check { display: flex; align-items: center; gap: 8px; margin: 6px 0 12px; cursor: pointer; }
+        .panel h2 { margin-bottom: 10px; }
+        .panel .hint { margin: -4px 0 12px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+        .badge-def { margin-left: 8px; }
+        #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px;
+                 border-radius: 6px; background: var(--silo-surface); border: 1px solid var(--silo-border);
+                 color: var(--silo-text); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
+        #toast.show { opacity: 1; }
+        #toast.err { border-color: var(--silo-danger); color: var(--silo-danger); }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="head">
+        <h1 data-i18n="plugin.profed.title">Transcoding profiles</h1>
+        <a href="/" class="btn btn-secondary btn-sm" data-i18n="plugin.profed.back">Back</a>
+    </div>
+
+    <div class="panel panel-wide">
+        <div class="picker">
+            <select class="input" id="pick"></select>
+            <button class="btn btn-secondary" id="btn-copy" type="button" data-i18n="plugin.profed.copy">Copy as new</button>
+            <button class="btn btn-secondary" id="btn-default" type="button" data-i18n="plugin.profed.make_default">Make default</button>
+        </div>
+        <p class="hint" id="pick-hint" style="margin-top:10px"></p>
+    </div>
+
+    <form id="form" autocomplete="off"></form>
+</div>
+<div id="toast"></div>
+<script src="/plugins/profile-editor/js/app.js"></script>
+</body>
+</html>

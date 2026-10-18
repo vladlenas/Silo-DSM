@@ -7,6 +7,12 @@ The top entry is used as the GitHub release notes; keep its version equal to
 
 ### Added
 
+- **Transcoding Profiles** (built-in plugin, library menu): every setting of
+  Silo's transcoding profiles on one page, also the ones the admin panel form
+  does not show — decoding on the video card, keeping video/audio that needs
+  no transcoding, HDR to SDR, quality and bitrate, frame size and rate, audio
+  channels, subtitles, HLS segments. Copy a profile, make it the default.
+
 - Helper status page shows where **FFprobe** is (the one next to ffmpeg that
   Silo uses); a missing ffprobe is reported in `Silo.log` at start.
 

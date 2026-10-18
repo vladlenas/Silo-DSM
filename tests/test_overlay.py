@@ -82,9 +82,17 @@ class OverlayTests(unittest.TestCase):
         go = read(self.path("internal/plugin/builtin.go"))
         self.assertIn("//go:embed all:dsm_ui", go)
         self.assertIn("//go:embed all:torrserver_import", go)
+        self.assertIn("//go:embed all:profile_editor", go)
         order = [go.index('"dsm_ui"}'), go.index('"default_ui"}'),
-                 go.index('"admin_ui"}'), go.index('"torrserver_import"}')]
+                 go.index('"admin_ui"}'), go.index('"torrserver_import"}'),
+                 go.index('"profile_editor"}')]
         self.assertEqual(order, sorted(order))
+
+    def test_profile_editor_is_built_in(self):
+        self.assertEqual(self.apply(), (0, ""))
+        plugin = "internal/plugin/profile_editor/"
+        self.assertIn('id: "profile-editor"', read(self.path(plugin + "info.yaml")))
+        self.assertTrue(os.path.exists(self.path(plugin + "js/app.js")))
 
     def test_torrserver_import_is_built_in(self):
         self.assertEqual(self.apply(), (0, ""))

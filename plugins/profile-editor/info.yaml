@@ -1,0 +1,25 @@
+# All settings of Silo's transcoding profiles on one page, including the ones
+# the admin panel form does not show (hardware decoding, copy, HDR, bitrate,
+# subtitles, HLS). Works through Silo's own profile API.
+id: "profile-editor"
+name: "Transcoding Profiles"
+version: "1.0.0"
+author: "Silo DSM"
+description: "Every setting of Silo's transcoding profiles: hardware decoding, copy, HDR to SDR, bitrate, subtitles, HLS"
+entry: "service.js"
+icon: "/img/ico-profile.svg"
+
+menu:
+  - title: "Transcoding profiles"
+    title_key: "plugin.profed.title"
+    route: "/"
+    rank: 100
+    icon: "/img/ico-profile.svg"
+
+events: []
+
+routes:
+  - "/"
+  - "/index.html"
+  - "/js/*"
+  - "/img/*"

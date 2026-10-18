@@ -11,7 +11,8 @@ added to the source tree right before `go build`:
   the Default Web UI scripts plus js/dsm.js, so the library works exactly as
   upstream wrote it. Default Web UI itself is not touched: "Make theme" on it
   in the admin panel brings Silo's own look back.
-* TorrServer Import (plugins/torrserver-import) becomes a built-in plugin.
+* TorrServer Import and Transcoding Profiles (plugins/) become built-in
+  plugins.
 * internal/web/static/css/style.css (admin panel, login page, plugin pages)
   gets overlay/static/dsm-core.css appended. It only applies under
   html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme;
@@ -162,11 +163,21 @@ def dsm_ui(src, overlay):
         write(dest, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
-def torrserver_import(src, repo):
-    target = os.path.join(need(os.path.join(src, "internal/plugin")), "torrserver_import")
-    if os.path.exists(target):
-        raise OverlayError("Silo already has internal/plugin/torrserver_import")
-    copy_tree(os.path.join(repo, "plugins/torrserver-import"), target)
+# Plugins of this repository that are compiled into Silo:
+# (folder in plugins/, folder in internal/plugin/, Go variable)
+BUILTIN_PLUGINS = (
+    ("torrserver-import", "torrserver_import", "torrserverImportFiles"),
+    ("profile-editor", "profile_editor", "profileEditorFiles"),
+)
+
+
+def builtin_plugins(src, repo):
+    plugins = need(os.path.join(src, "internal/plugin"))
+    for name, folder, _ in BUILTIN_PLUGINS:
+        target = os.path.join(plugins, folder)
+        if os.path.exists(target):
+            raise OverlayError("Silo already has internal/plugin/" + folder)
+        copy_tree(os.path.join(repo, "plugins", name), target)
 
 
 BUILTIN_EMBED = """//go:embed all:admin_ui
@@ -179,20 +190,23 @@ BUILTIN_SOURCES = """		{defaultUIFiles, "default_ui"},
 
 def register_builtins(src):
     """DSM Style UI first (the main page on a new install), Silo's own plugins
-    after it, TorrServer Import last."""
+    after it, then the plugins of this repository."""
     go = os.path.join(src, "internal/plugin/builtin.go")
-    replace_once(go, BUILTIN_EMBED, BUILTIN_EMBED + """
+    embeds = """
 // Added by Silo DSM.
 //go:embed all:dsm_ui
 var dsmUIFiles embed.FS
-
+"""
+    sources = ""
+    for _, folder, var in BUILTIN_PLUGINS:
+        embeds += """
 // Added by Silo DSM.
-//go:embed all:torrserver_import
-var torrserverImportFiles embed.FS
-""")
-    replace_once(go, BUILTIN_SOURCES, """		{dsmUIFiles, "dsm_ui"},
-""" + BUILTIN_SOURCES + """		{torrserverImportFiles, "torrserver_import"},
-""")
+//go:embed all:{}
+var {} embed.FS
+""".format(folder, var)
+        sources += '\t\t{{{}, "{}"}},\n'.format(var, folder)
+    replace_once(go, BUILTIN_EMBED, BUILTIN_EMBED + embeds)
+    replace_once(go, BUILTIN_SOURCES, '\t\t{dsmUIFiles, "dsm_ui"},\n' + BUILTIN_SOURCES + sources)
 
 
 def main(argv):
@@ -206,7 +220,7 @@ def main(argv):
         core_style(src, overlay)
         look_script(src)
         dsm_ui(src, overlay)
-        torrserver_import(src, REPO)
+        builtin_plugins(src, REPO)
         register_builtins(src)
     except (OverlayError, OSError, ValueError, subprocess.CalledProcessError) as e:
         print("ERROR: DSM look: {}".format(e), file=sys.stderr)

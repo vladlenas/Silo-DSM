@@ -66,6 +66,13 @@ library). It copies the torrent list from TorrServer (e.g. TorrServer DSM on
 
 Not needed? Disable it in the admin panel → Plugins.
 
+## Transcoding profiles
+
+The admin panel creates a profile with a few fields only. **Transcoding
+profiles** in the library menu shows all of them: decoding on the video card
+(needed for 4K and HDR with VAAPI), keeping video and audio that need no
+transcoding, HDR to SDR, quality, bitrate, subtitles, HLS.
+
 ## Look
 
 Silo in this package has two built-in themes:
