@@ -192,7 +192,12 @@ html.silo-dsm .btn-danger { background: #fff; color: var(--silo-danger); }
 html.silo-dsm .btn-danger:hover { background: #d32f2f; color: #fff; }
 
 /* Check boxes */
-html.silo-dsm input[type="checkbox"] { background: #fff; }
+/* The white box must not cover Silo's own "checked" fill (blue here). */
+html.silo-dsm input[type="checkbox"]:not(:checked) { background: #fff; }
+html.silo-dsm input[type="checkbox"]:checked {
+    background: var(--silo-amber);
+    border-color: var(--silo-amber);
+}
 html.silo-dsm input[type="checkbox"]:checked::after { border-color: #fff; }
 html.silo-dsm label:has(input[type="checkbox"]:hover),
 html.silo-dsm label:has(input[type="radio"]:hover) { color: inherit; }

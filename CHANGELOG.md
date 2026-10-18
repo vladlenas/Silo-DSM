@@ -18,6 +18,9 @@ The top entry is used as the GitHub release notes; keep its version equal to
 
 ### Fixed
 
+- DSM look: ticked check boxes looked empty (white on white) in the admin
+  panel, TorrServer Import and the profile editor.
+
 - `Silo.log` no longer gets "helper-auth: denied GET /" every minute: the
   nginx check uses its own quiet address of the Helper.
 - TorrServer Import writes a scheduled check to the log only when it added

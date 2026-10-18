@@ -112,6 +112,10 @@ class OverlayTests(unittest.TestCase):
             if line.rstrip().endswith("{") and not line.startswith("@media"):
                 self.assertIn("html.silo-dsm", line)
 
+        # The white box must not hide the "checked" state (it did in 0.8.1).
+        self.assertNotIn('html.silo-dsm input[type="checkbox"] {', added)
+        self.assertIn('html.silo-dsm input[type="checkbox"]:checked {', added)
+
         script = '<script src="/js/silo-look.js"></script>'
         self.assertTrue(os.path.exists(self.path("internal/web/static/js/silo-look.js")))
         for page in ("internal/web/static/login.html", "internal/plugin/admin_ui/index.html"):
