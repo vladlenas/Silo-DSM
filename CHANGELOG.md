@@ -3,7 +3,9 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
-## Unreleased
+## 0.8.1 (2026-10-18)
+
+Silo stays at `Silo.1` (commit `fc5795e`).
 
 ### Added
 
