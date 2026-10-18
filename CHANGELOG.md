@@ -5,13 +5,16 @@ The top entry is used as the GitHub release notes; keep its version equal to
 
 ## Unreleased
 
-### Added
+### Changed
 
-- **DSM Style UI** (`dsm-ui`, separate zip in the release): a Silo theme that
-  shows the library in the style of DSM and of the package window — white
-  side panel with categories and counters, search, toolbar, DSM-like dialogs.
-  It reuses the scripts of Silo's built-in Default Web UI (which must stay
-  enabled) and shows a hint when that plugin is off.
+- **DSM look built in.** Silo is compiled with a light DSM-style interface,
+  nothing to install:
+  - library page: white side panel with categories (movies, series, music,
+    other, no category) and counters, search, toolbar, DSM-like dialogs;
+  - admin panel and login page in the same style, with section icons;
+  - the package icon instead of Silo's logo (tab icon, login, admin panel).
+  Silo's library scripts are used unchanged. The build stops with a clear
+  message when a Silo update no longer fits the new page.
 
 ## 0.7.1 (2026-10-17)
 

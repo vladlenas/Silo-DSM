@@ -11,9 +11,10 @@
 </head>
 <body>
 <!--
-  DSM Style UI. The element ids are the ones the built-in Default Web UI
-  scripts (loaded below from /plugins/default-ui/js/) expect; js/dsm.js adds
-  the category list, search and the DSM look on top of them.
+  Silo DSM: this page replaces index.html of Silo's built-in Default Web UI
+  when the package is built (overlay/apply.py). The scripts of that UI stay
+  as they are; the element ids are the ones they expect (the build checks
+  this), and js/dsm.js adds the category list and search on top.
 -->
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
@@ -364,16 +365,6 @@
     </div>
 </div>
 
-<!-- Shown when the Default Web UI scripts are missing -->
-<div class="dsm-missing" id="dsm-missing" hidden>
-    <div class="dsm-missing-card">
-        <img src="img/logo.png" alt="">
-        <h2 data-i18n="dsm_missing_title">Default Web UI is off</h2>
-        <p data-i18n="dsm_missing_text">DSM Style UI uses the built-in "Default Web UI" plugin. Enable it in the admin panel → Plugins; DSM Style UI stays the main page as long as it is above it in the list.</p>
-        <a class="btn btn-primary" href="/plugins/admin-ui/" data-i18n="dsm_open_admin">Open admin panel</a>
-    </div>
-</div>
-
 <div class="offline-banner" id="offline-banner">
     <div class="offline-card">
         <h2 data-i18n="server_offline_title">Server unreachable</h2>
@@ -385,15 +376,15 @@
 <div id="toast-root" class="toast-root"></div>
 
 <!-- Library logic of the built-in Default Web UI -->
-<script src="/plugins/default-ui/js/utils.js"></script>
-<script src="/plugins/default-ui/js/categories.js"></script>
-<script src="/plugins/default-ui/js/cards.js"></script>
-<script src="/plugins/default-ui/js/add.js"></script>
-<script src="/plugins/default-ui/js/modals.js"></script>
-<script src="/plugins/default-ui/js/cache.js"></script>
-<script src="/plugins/default-ui/js/info.js"></script>
-<script src="/plugins/default-ui/js/menu.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/categories.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/add.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/cache.js"></script>
+<script src="js/info.js"></script>
+<script src="js/menu.js"></script>
 <script src="js/dsm.js"></script>
-<script src="/plugins/default-ui/js/app.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

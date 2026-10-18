@@ -1,5 +1,5 @@
 /* ============================================================================
-   DSM Style UI: Silo library in the look of Synology DSM 7 and of the
+   Silo DSM: Silo library in the look of Synology DSM 7 and of the
    TorrServer Silo package window (Helper): white side panel, blue accents,
    white panels on a light grey background.
    ============================================================================ */
@@ -1156,8 +1156,7 @@ textarea.input { resize: vertical; }
 .toast-success { border-left-color: #22a75a; }
 .toast-error { border-left-color: var(--red); }
 
-.offline-banner,
-.dsm-missing {
+.offline-banner {
     position: fixed;
     inset: 0;
     z-index: 400;
@@ -1169,10 +1168,8 @@ textarea.input { resize: vertical; }
 }
 
 .offline-banner.show { display: flex; }
-.dsm-missing:not([hidden]) { display: flex; }
 
-.offline-card,
-.dsm-missing-card {
+.offline-card {
     max-width: 440px;
     padding: 28px 30px;
     background: #fff;
@@ -1183,10 +1180,8 @@ textarea.input { resize: vertical; }
     text-align: center;
 }
 
-.dsm-missing-card { border-top-color: var(--amber); }
-.dsm-missing-card img { width: 56px; height: 56px; }
-.offline-card h2, .dsm-missing-card h2 { margin: 8px 0 10px; font-size: 18px; }
-.offline-card p, .dsm-missing-card p { color: var(--text-2); }
+.offline-card h2 { margin: 8px 0 10px; font-size: 18px; }
+.offline-card p { color: var(--text-2); }
 .offline-hint { color: var(--muted) !important; font-size: 13px; }
 
 /* ── Narrow screens ─────────────────────────────────────────────────────── */

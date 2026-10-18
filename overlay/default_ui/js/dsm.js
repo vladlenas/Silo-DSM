@@ -1,10 +1,9 @@
 'use strict';
 
-// DSM Style UI on top of the Default Web UI scripts.
+// Silo DSM: DSM look for Silo's built-in Default Web UI.
 //
-// The scripts of the built-in Default Web UI (cards, add, info, cache,
-// transcoding, menu) do the work; this file only adds what the DSM layout
-// has on top: the category list with counters, the search field, a flat
+// The scripts of the Default Web UI (cards, add, info, cache, transcoding,
+// menu) do the work; this file only adds what the DSM layout has on top: the category list with counters, the search field, a flat
 // plugin list and the version under the name. It wraps the global functions
 // of those scripts instead of copying them, so fixes in Silo arrive here too.
 //
@@ -22,21 +21,6 @@
             }
         } catch (e) { /* no dictionary */ }
         return fallback || key;
-    }
-
-    // ── Default Web UI missing ─────────────────────────────────────────────
-    var needed = ['renderSync', 'upsertCard', 'removeCard', 'openInfoModal', 'bindMenu', 'loadPluginsMenu'];
-    var missing = needed.some(function (name) { return typeof window[name] !== 'function'; });
-
-    if (missing) {
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('#dsm-missing [data-i18n]').forEach(function (el) {
-                el.textContent = tr(el.getAttribute('data-i18n'), el.textContent);
-            });
-            document.getElementById('app').hidden = true;
-            document.getElementById('dsm-missing').hidden = false;
-        });
-        return;
     }
 
     // ── Categories ─────────────────────────────────────────────────────────

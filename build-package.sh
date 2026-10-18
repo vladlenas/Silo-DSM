@@ -1,6 +1,7 @@
 #!/bin/bash
-# Builds one .spk: Silo from a pinned commit of the TorrServer "silo" branch,
-# compiled for one architecture, plus the package scripts, Helper and UI.
+# Builds one .spk: Silo from a pinned commit of the TorrServer "silo" branch
+# with the DSM look of overlay/ (see overlay/apply.py), compiled for one
+# architecture, plus the package scripts, Helper and UI.
 #
 #   ./build-package.sh <silo version> <silo commit> <arch> <package version>
 #
@@ -43,7 +44,12 @@ case "${ARCH}" in
 esac
 
 SRC_DIR="dest_src/${SILO_COMMIT}"
-BIN_PATH="dest_bin/${SILO_COMMIT}/silo-linux-${ARCH}"
+
+# The web pages are compiled into the binary, so a cached binary is only
+# reused for the same commit and the same overlay.
+OVERLAY_ID="$(cd overlay && find . -type f ! -path '*/__pycache__/*' -print0 | LC_ALL=C sort -z |
+    xargs -0 sha256sum | sha256sum | cut -c1-12)"
+BIN_PATH="dest_bin/${SILO_COMMIT}-${OVERLAY_ID}/silo-linux-${ARCH}"
 
 is_elf() {
     [[ "$(head -c 4 "$1" | od -An -c | tr -d ' ')" == '177ELF' ]]
@@ -92,6 +98,7 @@ compile_silo() {
         cp "${SILO_PREBUILT_DIR}/silo-linux-${ARCH}" "${BIN_PATH}.part"
     else
         fetch_source
+        python3 overlay/apply.py "${SRC_DIR}"
         echo ">>> Compiling silo-linux-${ARCH} with $(cd "${SRC_DIR}" && "${GO}" version)"
         local out
         out="$(pwd)/${BIN_PATH}.part"

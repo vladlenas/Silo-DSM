@@ -64,17 +64,12 @@ title, poster and category.
 3. **Import now** adds everything missing. **Automatic scan** (every 15 min by
    default) adds only new torrents; nothing is ever deleted.
 
-## DSM look (optional)
+## DSM look
 
-`dsm-ui-<version>.zip` (attached to each release) is a Silo theme: the library
-in the style of DSM and of the package window — categories with counters,
-search, the same dialogs. It runs on the logic of Silo's built-in
-**Default Web UI**, so that plugin must stay enabled.
-
-1. Silo → admin panel → **Plugins** → upload the zip.
-2. Make **DSM Style UI** the theme (or move it above Default Web UI).
-
-To go back, disable DSM Style UI. The admin panel keeps Silo's own look.
+Silo in this package looks like DSM and the package window: a light library
+page with categories, counters and search, and the same style in the admin
+panel and on the login page. Nothing to install: the look is compiled into
+Silo (`overlay/`), and Silo's own library scripts are used unchanged.
 
 ## Troubleshooting
 
@@ -92,7 +87,9 @@ make        # spk/Silo-DSM-<version>-amd64.spk + spk/torrserver-import-<version>
 make clean
 ```
 
-Needs Go 1.26, git and xz. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
+Needs Go 1.26, git, xz and Python 3; `overlay/apply.py` puts the DSM look
+into the Silo source before compiling and stops the build when an upstream
+change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
 `PKG_VERSION`; a change of `PKG_VERSION` on `main` builds and publishes a
 GitHub pre-release with the `.spk`, the plugin zip and `SHA256SUMS`.
 

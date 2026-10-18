@@ -11,8 +11,8 @@ ARCHES := amd64
 
 # Silo plugins, installed in Silo's admin panel (not part of the .spk):
 #   torrserver-import  imports the torrent list of TorrServer
-#   dsm-ui             the library in the style of DSM (theme)
-PLUGINS := torrserver-import dsm-ui
+# (The DSM look is not a plugin: overlay/ is compiled into Silo.)
+PLUGINS := torrserver-import
 
 .PHONY: all binaries plugin clean
 
@@ -21,7 +21,7 @@ all: $(addprefix silo-,$(ARCHES)) plugin
 silo-%:
 	@./build-package.sh "$(SILO_VERSION)" "$(SILO_COMMIT)" "$*" "$(PKG_VERSION)"
 
-# Only compile the binaries (dest_bin/<commit>/silo-linux-<arch>).
+# Only compile the binaries (dest_bin/<commit>-<overlay>/silo-linux-<arch>).
 binaries:
 	@for arch in $(ARCHES); do \
 		BUILD_ONLY=1 ./build-package.sh "$(SILO_VERSION)" "$(SILO_COMMIT)" "$$arch" "$(PKG_VERSION)" || exit 1; \
