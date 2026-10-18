@@ -35,6 +35,7 @@ EOF
 chmod +x "$SYNOPKG_PKGDEST/bin/silo"
 printf 'import time\nwhile True: time.sleep(1)\n' > "$SYNOPKG_PKGDEST/helper/helper.py"
 printf '#!/bin/sh\n' > "$FFMPEG_DIR/ffmpeg"; chmod +x "$FFMPEG_DIR/ffmpeg"
+printf '#!/bin/sh\n' > "$FFMPEG_DIR/ffprobe"; chmod +x "$FFMPEG_DIR/ffprobe"
 
 cleanup() {
     for p in $(cat "$SYNOPKG_PKGVAR/TorrServerSilo.pid" 2>/dev/null); do kill -9 "$p" 2>/dev/null; done
@@ -115,6 +116,13 @@ check "helper stopped"                       sh -c "! { kill -0 $HELPER 2>/dev/n
 check "silo stopped"                         sh -c "! { kill -0 $NEW_SILO 2>/dev/null && ! grep -q '^State:[[:space:]]*Z' /proc/$NEW_SILO/status; }"
 check "pid file removed"                     [ ! -e "$SYNOPKG_PKGVAR/TorrServerSilo.pid" ]
 check "status says stopped"                  sh -c "! sh '$SSS' status >/dev/null"
+
+echo "== missing ffprobe is logged"
+rm -f "$FFMPEG_DIR/ffprobe"
+sh "$SSS" start; sleep 1
+check "ffprobe warning logged"               grep -q 'ffprobe was not found next to ffmpeg' "$SYNOPKG_PKGVAR/Silo.log"
+check "still running without ffprobe"        sh "$SSS" status
+sh "$SSS" stop
 
 echo "== missing ffmpeg is logged, not fatal"
 rm -f "$FFMPEG_DIR/ffmpeg"

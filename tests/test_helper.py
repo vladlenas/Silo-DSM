@@ -41,7 +41,7 @@ esac
 LANGS = ("ru", "uk", "lt", "pl")
 # Names and values that stay as they are in every language.
 NOT_TRANSLATED = {
-    "CPU", "DSM", "FFmpeg", "Silo", "TorrServer Silo", "VAAPI (Intel)", "Silo.log",
+    "CPU", "DSM", "FFmpeg", "FFprobe", "Silo", "TorrServer Silo", "VAAPI (Intel)", "Silo.log",
     "English", "Русский", "Lietuvių", "Polski", "Українська",
 }
 
@@ -254,6 +254,48 @@ class NginxRouteTests(Base):
         self.assertEqual(h.dsm_http_port(), 5000)
 
 
+class NginxProbeTests(Base):
+    """The nginx check reaches the Helper without a DSM session and without
+    writing "denied" to the log every minute."""
+
+    def setUp(self):
+        super().setUp()
+        import http.server
+        import threading
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h.Handler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+
+    def get(self, path):
+        import contextlib
+        import io
+        import urllib.error
+        import urllib.request
+        err = io.StringIO()
+        url = "http://127.0.0.1:{}{}".format(self.server.server_address[1], path)
+        with contextlib.redirect_stderr(err):
+            try:
+                with urllib.request.urlopen(url, timeout=10) as r:
+                    status = r.status
+            except urllib.error.HTTPError as e:
+                status = e.code
+                e.close()
+        return status, err.getvalue()
+
+    def test_probe_answers_without_session_and_log(self):
+        self.assertEqual(self.get(h.NGINX_PROBE), (204, ""))
+
+    def test_other_pages_still_need_a_session(self):
+        status, log = self.get("/")
+        self.assertEqual(status, 403)
+        self.assertIn("denied", log)
+
+    def test_check_uses_the_probe(self):
+        self.assertTrue(h.NGINX_ROUTE_PATH.endswith("/helper/"))
+        self.assertEqual(h.NGINX_PROBE, "/nginx-probe")
+
+
 class FolderTests(Base):
     def test_unwritable_folder_names_the_share(self):
         root = tempfile.mkdtemp()
@@ -315,6 +357,19 @@ class VaapiTests(Base):
         page = h.main_page("nas")
         self.assertIn("Test VAAPI", page)
         self.assertIn("renderD128", page)
+
+    def test_card_shows_where_ffprobe_is(self):
+        probe = os.path.join(FFMPEG_DIR, "ffprobe")
+        with open(probe, "w") as f:
+            f.write("#!/bin/sh\n")
+        os.chmod(probe, 0o755)
+        self.addCleanup(os.unlink, probe)
+        card = h.transcoding_card(h.get_settings())
+        self.assertIn("<td>FFprobe</td><td><span translate=\"no\">{}</span>".format(probe), card)
+
+    def test_card_says_when_ffprobe_is_missing(self):
+        card = h.transcoding_card(h.get_settings())
+        self.assertIn('<td>FFprobe</td><td><span class="value-bad">Not found</span>', card)
 
 
 def locale(lang):

@@ -199,8 +199,11 @@ function runImport(mode) {
     state.code = errors.length ? "add_failed" : "";
     state.error = errors.join("; ");
     saveJSON("state", state);
-    console.log("[TS Import] " + mode + ": found " + state.found + ", added " + state.added +
-        ", skipped " + state.skipped + ", failed " + state.failed);
+    // A scheduled check that found nothing new stays out of the log.
+    if (mode !== "auto" || state.added || state.failed) {
+        console.log("[TS Import] " + mode + ": found " + state.found + ", added " + state.added +
+            ", skipped " + state.skipped + ", failed " + state.failed);
+    }
     return state;
 }
 

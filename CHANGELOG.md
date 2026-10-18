@@ -3,6 +3,20 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## Unreleased
+
+### Added
+
+- Helper status page shows where **FFprobe** is (the one next to ffmpeg that
+  Silo uses); a missing ffprobe is reported in `Silo.log` at start.
+
+### Fixed
+
+- `Silo.log` no longer gets "helper-auth: denied GET /" every minute: the
+  nginx check uses its own quiet address of the Helper.
+- TorrServer Import writes a scheduled check to the log only when it added
+  something or failed.
+
 ## 0.8.1 (2026-10-18)
 
 Silo stays at `Silo.1` (commit `fc5795e`).

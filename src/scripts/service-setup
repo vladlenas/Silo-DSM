@@ -133,6 +133,9 @@ service_prestart()
     if [ ! -x "${FFMPEG_DIR}/ffmpeg" ]; then
         service_log service "Warning: FFmpeg was not found in ${FFMPEG_DIR}; transcoding is not available. Install the FFmpeg 8 package from SynoCommunity."
     fi
+    if [ -x "${FFMPEG_DIR}/ffmpeg" ] && [ ! -x "${FFMPEG_DIR}/ffprobe" ]; then
+        service_log service "Warning: ffprobe was not found next to ffmpeg in ${FFMPEG_DIR}; Silo cannot read file details for transcoding. Reinstall the FFmpeg package from SynoCommunity."
+    fi
 
     if [ -d "${SYNOPKG_PKGDEST}/ui" ]; then
         update_firewall_port

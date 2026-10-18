@@ -75,6 +75,8 @@ FFMPEG_DIR = os.environ.get("FFMPEG_DIR") or next(
     FFMPEG_CANDIDATES[0],
 )
 FFMPEG_BIN = os.path.join(FFMPEG_DIR, "ffmpeg")
+# Silo takes the ffprobe that lies next to the ffmpeg it found.
+FFPROBE_BIN = os.path.join(FFMPEG_DIR, "ffprobe")
 DRI_DIR = os.environ.get("SILO_DSM_DRI") or "/dev/dri"
 VIDEO_GROUP = "videodriver"
 VAAPI_TEST_TIMEOUT = 20
@@ -2025,6 +2027,11 @@ def transcoding_card(settings):
     else:
         ffmpeg_value = '<span class="value-bad">Not found</span>'
 
+    if os.access(FFPROBE_BIN, os.X_OK):
+        ffprobe_value = '<span translate="no">{}</span>'.format(html.escape(FFPROBE_BIN))
+    else:
+        ffprobe_value = '<span class="value-bad">Not found</span>'
+
     if devices:
         rows = []
         for device in devices:
@@ -2080,6 +2087,7 @@ def transcoding_card(settings):
         <table class="metric-table">
             <tr><td>Transcoding</td><td>{enabled}</td></tr>
             <tr><td>FFmpeg</td><td>{ffmpeg}</td></tr>
+            <tr><td>FFprobe</td><td>{ffprobe}</td></tr>
             <tr><td>VAAPI in FFmpeg</td><td>{vaapi}</td></tr>
             <tr><td>Acceleration</td><td>{hwaccel}</td></tr>
             <tr><td>Render devices</td><td>{dri}</td></tr>
@@ -2094,6 +2102,7 @@ def transcoding_card(settings):
 """.format(
         enabled=yes_no(settings["ffmpeg_enabled"]),
         ffmpeg=ffmpeg_value,
+        ffprobe=ffprobe_value,
         vaapi=("Supported" if info["vaapi"] else "Not supported") if info["found"] else "-",
         hwaccel=HWACCEL_LABELS.get(settings["ffmpeg_hwaccel"], settings["ffmpeg_hwaccel"]),
         dri=dri_value,
@@ -2842,6 +2851,14 @@ class Handler(BaseHTTPRequestHandler):
 
 
     def do_GET(self):
+        # Probe of check_nginx_route(): answered without a DSM session and
+        # without a log line, it only shows that nginx still reaches us.
+        if urlparse(self.path).path == NGINX_PROBE:
+            self.send_response(204)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+
         if not self.authorize():
             return
 
@@ -3036,6 +3053,7 @@ def plugin_tick():
 # find out what removes it. Without a DSM session the Helper answers 403; a
 # 404 comes from nginx itself.
 NGINX_ROUTE_PATH = "/webman/3rdparty/{}/helper/".format(PACKAGE_NAME)
+NGINX_PROBE = "/nginx-probe"
 SYNOINFO_FILES = ("/etc/synoinfo.conf", "/etc.defaults/synoinfo.conf")
 NGINX_ROUTE_STATE = {"missing": None}
 
@@ -3064,7 +3082,7 @@ def dsm_http_port():
 
 def nginx_route_status():
     """HTTP status of the Helper address through DSM nginx, or None."""
-    url = "http://127.0.0.1:{}{}".format(dsm_http_port(), NGINX_ROUTE_PATH)
+    url = "http://127.0.0.1:{}{}{}".format(dsm_http_port(), NGINX_ROUTE_PATH, NGINX_PROBE.lstrip("/"))
     opener = urllib.request.build_opener(_NoRedirect())
     try:
         with opener.open(url, timeout=10) as response:
