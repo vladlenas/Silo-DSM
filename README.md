@@ -64,6 +64,18 @@ title, poster and category.
 3. **Import now** adds everything missing. **Automatic scan** (every 15 min by
    default) adds only new torrents; nothing is ever deleted.
 
+## DSM look (optional)
+
+`dsm-ui-<version>.zip` (attached to each release) is a Silo theme: the library
+in the style of DSM and of the package window — categories with counters,
+search, the same dialogs. It runs on the logic of Silo's built-in
+**Default Web UI**, so that plugin must stay enabled.
+
+1. Silo → admin panel → **Plugins** → upload the zip.
+2. Make **DSM Style UI** the theme (or move it above Default Web UI).
+
+To go back, disable DSM Style UI. The admin panel keeps Silo's own look.
+
 ## Troubleshooting
 
 - **Silo does not start / port in use:** Helper → Logs (`Silo.log`); change

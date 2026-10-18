@@ -3,6 +3,16 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## Unreleased
+
+### Added
+
+- **DSM Style UI** (`dsm-ui`, separate zip in the release): a Silo theme that
+  shows the library in the style of DSM and of the package window — white
+  side panel with categories and counters, search, toolbar, DSM-like dialogs.
+  It reuses the scripts of Silo's built-in Default Web UI (which must stay
+  enabled) and shows a hint when that plugin is off.
+
 ## 0.7.1 (2026-10-17)
 
 Silo stays at `Silo.1` (commit `fc5795e`).

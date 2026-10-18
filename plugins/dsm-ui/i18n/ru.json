@@ -1,0 +1,8 @@
+{
+  "dsm_all": "Все торренты",
+  "dsm_search": "Поиск",
+  "dsm_no_match": "Ничего не найдено",
+  "dsm_missing_title": "Default Web UI выключен",
+  "dsm_missing_text": "DSM Style UI работает на основе встроенного плагина «Default Web UI». Включите его в админ-панели → Плагины; DSM Style UI остаётся главной страницей, пока стоит в списке выше него.",
+  "dsm_open_admin": "Открыть админ-панель"
+}

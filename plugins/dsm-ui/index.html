@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorrServer Silo</title>
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <link rel="stylesheet" href="css/dsm.css">
+    <script src="/i18n.js"></script>
+    <script src="/js/ui.js"></script>
+</head>
+<body>
+<!--
+  DSM Style UI. The element ids are the ones the built-in Default Web UI
+  scripts (loaded below from /plugins/default-ui/js/) expect; js/dsm.js adds
+  the category list, search and the DSM look on top of them.
+-->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="layout" id="app">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand" id="brand" title="TorrServer Silo">
+            <img src="img/logo.png" alt="" class="brand-logo">
+            <div class="brand-text">
+                <div class="brand-name">TorrServer Silo</div>
+                <div class="brand-sub" id="dsm-version">&nbsp;</div>
+            </div>
+        </div>
+
+        <div class="sidebar-scroll" id="sidebar-scroll">
+            <div class="nav-section">
+                <div class="nav-section-title" data-i18n="library">Library</div>
+                <div id="dsm-categories"></div>
+            </div>
+
+            <div class="nav-section" id="plugins-section" hidden>
+                <div class="nav-section-title" data-i18n="plugins">Plugins</div>
+                <div id="plugins-menu"></div>
+            </div>
+        </div>
+
+        <div class="sidebar-bottom">
+            <button class="nav-item" id="btn-about" type="button">
+                <img src="img/ico-info.svg" alt="" class="nav-icon">
+                <span data-i18n="about">About</span>
+            </button>
+            <button class="nav-item" id="btn-donate" type="button">
+                <img src="img/ico-donate.svg" alt="" class="nav-icon">
+                <span data-i18n="donate">Donate</span>
+            </button>
+            <button class="nav-item nav-item-danger" id="btn-turn-off" type="button" hidden>
+                <img src="img/ico-power-r.svg" alt="" class="nav-icon">
+                <span data-i18n="turn_off">Turn Off</span>
+            </button>
+
+            <div class="user-row">
+                <div class="user-avatar" id="user-avatar">?</div>
+                <span class="user-name" id="username">...</span>
+                <button class="user-logout" id="btn-logout" type="button" title="Logout">
+                    <img src="img/ico-logout.svg" alt="">
+                </button>
+            </div>
+
+            <!-- Used by the Default Web UI scripts; categories live in the list above. -->
+            <button id="btn-category" type="button" hidden></button>
+        </div>
+    </aside>
+
+    <main class="content">
+        <header class="topbar">
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <img src="img/ico-menu.svg" alt="">
+            </button>
+            <h1 id="dsm-title">Library</h1>
+            <span class="topbar-count" id="dsm-count"></span>
+        </header>
+
+        <div class="toolbar">
+            <button class="btn btn-primary" id="btn-add" type="button">
+                <img src="img/ico-add-w.svg" alt="">
+                <span data-i18n="add">Add</span>
+            </button>
+            <button class="btn btn-secondary" id="btn-remove-all" type="button">
+                <img src="img/ico-delete.svg" alt="">
+                <span data-i18n="remove_all">Remove All</span>
+            </button>
+            <div class="toolbar-spacer"></div>
+            <label class="search">
+                <img src="img/ico-search.svg" alt="">
+                <input type="search" id="dsm-search" autocomplete="off" data-i18n-placeholder="dsm_search">
+            </label>
+        </div>
+
+        <section class="grid" id="grid">
+            <p class="grid-msg" data-i18n="loading">Loading...</p>
+        </section>
+        <p class="grid-msg" id="dsm-no-match" hidden data-i18n="dsm_no_match">Nothing found</p>
+    </main>
+</div>
+
+<!-- Add torrent -->
+<div class="modal-overlay" id="add-overlay" style="display:none;">
+    <div class="modal modal-add" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 data-i18n="add_torrent">Add torrent</h2>
+            <button class="modal-close" id="add-close" type="button" aria-label="Close">×</button>
+        </div>
+        <form id="add-form" autocomplete="off">
+            <div class="modal-body add-body">
+                <div class="add-preview">
+                    <div class="add-preview-frame" id="add-preview-frame">
+                        <img id="add-preview-img" src="" alt="" hidden>
+                        <div class="add-preview-empty" id="add-preview-empty" data-i18n="no_poster">No Poster</div>
+                    </div>
+                    <div class="add-preview-label" data-i18n="selected_poster">Selected poster</div>
+                </div>
+
+                <div class="add-fields">
+                    <label class="field">
+                        <span data-i18n="link">Link (magnet / hash / torrs://)</span>
+                        <textarea class="input add-textarea" name="link" rows="2" data-i18n-placeholder="link_placeholder"></textarea>
+                    </label>
+
+                    <label class="file-drop" id="add-drop">
+                        <input type="file" id="add-file" accept=".torrent,application/x-bittorrent">
+                        <img class="file-drop-icon" src="img/ico-download.svg" alt="">
+                        <span class="file-drop-text" data-i18n="file_drop">Choose or drop a .torrent file</span>
+                        <span class="file-drop-name" id="add-file-name" hidden></span>
+                        <button class="file-drop-clear" id="add-file-clear" type="button" hidden aria-label="Clear">×</button>
+                    </label>
+
+                    <label class="field">
+                        <span data-i18n="title">Title</span>
+                        <input class="input" name="title" data-i18n-placeholder="title_placeholder">
+                    </label>
+
+                    <label class="field">
+                        <span data-i18n="category">Category</span>
+                        <select class="input" name="category" id="add-category"></select>
+                    </label>
+
+                    <div class="field">
+                        <span data-i18n="poster">Poster URL</span>
+                        <input class="input" name="poster" id="add-poster-url" data-i18n-placeholder="poster_placeholder">
+                    </div>
+
+                    <div class="poster-block">
+                        <div class="poster-block-head">
+                            <span data-i18n="poster_list">Posters</span>
+                            <span class="poster-status" id="add-poster-status"></span>
+                        </div>
+                        <div class="poster-strip" id="add-poster-strip"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" id="add-cancel" data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary" type="submit" data-i18n="add">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit torrent -->
+<div class="modal-overlay" id="edit-overlay" style="display:none;">
+    <div class="modal modal-add" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 data-i18n="edit_torrent">Edit torrent</h2>
+            <button class="modal-close" id="edit-close" type="button" aria-label="Close">×</button>
+        </div>
+        <form id="edit-form" autocomplete="off">
+            <div class="modal-body add-body">
+                <div class="add-preview">
+                    <div class="add-preview-frame">
+                        <img id="edit-preview-img" src="" alt="" hidden>
+                        <div class="add-preview-empty" id="edit-preview-empty" data-i18n="no_poster">No Poster</div>
+                    </div>
+                    <div class="add-preview-label" data-i18n="selected_poster">Selected poster</div>
+                    <div class="edit-hash">
+                        <span class="hash-label" data-i18n="hash">Hash</span>
+                        <span class="hash-value" id="edit-hash"></span>
+                    </div>
+                </div>
+
+                <div class="add-fields">
+                    <label class="field">
+                        <span data-i18n="title">Title</span>
+                        <input class="input" name="title" data-i18n-placeholder="title_placeholder">
+                    </label>
+
+                    <label class="field">
+                        <span data-i18n="category">Category</span>
+                        <select class="input" name="category" id="edit-category"></select>
+                    </label>
+
+                    <div class="field">
+                        <span data-i18n="poster">Poster URL</span>
+                        <input class="input" name="poster" id="edit-poster-url" data-i18n-placeholder="poster_placeholder">
+                    </div>
+
+                    <div class="poster-block">
+                        <div class="poster-block-head">
+                            <span data-i18n="poster_list">Posters</span>
+                            <span class="poster-status" id="edit-poster-status"></span>
+                        </div>
+                        <div class="poster-strip" id="edit-poster-strip"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" id="edit-cancel" data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary" type="submit" data-i18n="save">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Torrent details -->
+<div class="modal-overlay" id="info-overlay" style="display:none;">
+    <div class="modal modal-info" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 id="info-title"></h2>
+            <button class="modal-close" id="info-close" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="info-header">
+            <img class="info-poster" id="info-poster" src="" alt="" style="display:none;">
+            <div class="info-head-right">
+                <div class="hash-row">
+                    <span class="hash-label" data-i18n="hash">Hash</span>
+                    <span class="hash-value" id="info-hash"></span>
+                </div>
+                <div class="info-plaques" id="info-plaques"></div>
+                <div class="info-plaques info-plaques-cache" id="info-plaques-cache"></div>
+            </div>
+        </div>
+
+        <div class="info-tabs">
+            <button class="info-tab active" type="button" data-tab="files" data-i18n="tab_files">Files</button>
+            <button class="info-tab" type="button" data-tab="cache" data-i18n="tab_cache">Cache</button>
+        </div>
+
+        <div class="info-body" id="info-files-panel">
+            <div class="info-folders" id="info-folders"></div>
+            <div class="info-files-wrap">
+                <div class="info-files-tools">
+                    <label class="media-only">
+                        <input type="checkbox" id="info-media-only" checked>
+                        <span data-i18n="media_only">Media only</span>
+                    </label>
+                    <button class="btn btn-secondary btn-sm" id="info-viewed-toggle" type="button" data-i18n="mark_all_viewed">Mark all as watched</button>
+                </div>
+                <div class="info-files" id="info-files"></div>
+            </div>
+        </div>
+
+        <div class="info-body info-body-cache" id="info-cache-panel" style="display:none;">
+            <div class="cache-toolbar">
+                <button class="btn-sm-icon" id="cache-zoom-out" type="button">−</button>
+                <span class="zoom-value" id="cache-zoom-value">14 px</span>
+                <button class="btn-sm-icon" id="cache-zoom-in" type="button">+</button>
+            </div>
+            <div class="cache-canvas-wrap" id="cache-canvas-wrap">
+                <canvas id="cache-canvas"></canvas>
+                <div class="cache-empty" id="cache-empty" style="display:none;" data-i18n="cache_not_loaded">
+                    Torrent is not loaded in RAM
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm -->
+<div class="modal-overlay" id="confirm-overlay" style="display:none;">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 id="confirm-title"></h2>
+        </div>
+        <div class="modal-body">
+            <p class="confirm-text" id="confirm-text"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="confirm-cancel" type="button"></button>
+            <button class="btn btn-danger" id="confirm-ok" type="button"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Transcoding profiles -->
+<div class="modal-overlay" id="transcode-overlay" style="display:none;">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 id="transcode-title"></h2>
+            <button class="modal-close" data-close="transcode-overlay" type="button">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="transcode-list" id="transcode-list"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="transcode-close" type="button"></button>
+        </div>
+    </div>
+</div>
+
+<!-- File details -->
+<div class="modal-overlay" id="fileinfo-overlay" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 id="fileinfo-title"></h2>
+            <button class="modal-close" data-close="fileinfo-overlay" type="button">×</button>
+        </div>
+        <div class="modal-body" id="fileinfo-body"></div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="fileinfo-close" type="button"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Donate -->
+<div class="modal-overlay" id="donate-overlay" style="display:none;">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 data-i18n="donate_title">Support the project</h2>
+            <button class="modal-close" data-close="donate-overlay" type="button">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="confirm-text" data-i18n="donate_text"></p>
+            <div class="donate-links">
+                <a class="btn btn-primary" href="https://boosty.to/yourok" target="_blank" rel="noopener noreferrer">Boosty</a>
+                <a class="btn btn-primary" href="https://yoomoney.ru/to/410013733697114/200" target="_blank" rel="noopener noreferrer">YooMoney</a>
+                <a class="btn btn-primary" href="https://www.tbank.ru/cf/742qEMhKhKn" target="_blank" rel="noopener noreferrer">T-Bank</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- About -->
+<div class="modal-overlay" id="about-overlay" style="display:none;">
+    <div class="modal modal-about" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2 data-i18n="about">About</h2>
+            <button class="modal-close" data-close="about-overlay" type="button">×</button>
+        </div>
+        <div class="modal-body about-body">
+            <div class="about-brand">
+                <img src="img/logo.png" alt="">
+                <div class="about-brand-text">
+                    <div class="about-title">TorrServer Silo</div>
+                    <div class="about-version" id="about-version">-</div>
+                </div>
+            </div>
+
+            <p class="about-thanks" data-i18n="about_thanks">Thanks to everyone who tested and helped!</p>
+
+            <div class="about-section-title" data-i18n="about_links">Links</div>
+            <ul class="about-links">
+                <li><a href="https://github.com/YouROK/TorrServer" target="_blank" rel="noopener noreferrer" data-i18n="about_link_project">Project GitHub</a></li>
+                <li><a href="https://github.com/YouROK/TorrServer/releases" target="_blank" rel="noopener noreferrer" data-i18n="about_link_releases">TorrServer Releases</a></li>
+                <li><a href="https://github.com/vladlenas" target="_blank" rel="noopener noreferrer" data-i18n="about_link_nas">NAS Releases</a></li>
+            </ul>
+
+            <div class="about-section-title" data-i18n="about_special_thanks">Special Thanks</div>
+            <ul class="about-contributors" id="about-contributors"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- Shown when the Default Web UI scripts are missing -->
+<div class="dsm-missing" id="dsm-missing" hidden>
+    <div class="dsm-missing-card">
+        <img src="img/logo.png" alt="">
+        <h2 data-i18n="dsm_missing_title">Default Web UI is off</h2>
+        <p data-i18n="dsm_missing_text">DSM Style UI uses the built-in "Default Web UI" plugin. Enable it in the admin panel → Plugins; DSM Style UI stays the main page as long as it is above it in the list.</p>
+        <a class="btn btn-primary" href="/plugins/admin-ui/" data-i18n="dsm_open_admin">Open admin panel</a>
+    </div>
+</div>
+
+<div class="offline-banner" id="offline-banner">
+    <div class="offline-card">
+        <h2 data-i18n="server_offline_title">Server unreachable</h2>
+        <p data-i18n="server_offline_text">The Silo server is offline or the network connection was lost.</p>
+        <p class="offline-hint" data-i18n="retrying">Retrying...</p>
+    </div>
+</div>
+
+<div id="toast-root" class="toast-root"></div>
+
+<!-- Library logic of the built-in Default Web UI -->
+<script src="/plugins/default-ui/js/utils.js"></script>
+<script src="/plugins/default-ui/js/categories.js"></script>
+<script src="/plugins/default-ui/js/cards.js"></script>
+<script src="/plugins/default-ui/js/add.js"></script>
+<script src="/plugins/default-ui/js/modals.js"></script>
+<script src="/plugins/default-ui/js/cache.js"></script>
+<script src="/plugins/default-ui/js/info.js"></script>
+<script src="/plugins/default-ui/js/menu.js"></script>
+<script src="js/dsm.js"></script>
+<script src="/plugins/default-ui/js/app.js"></script>
+</body>
+</html>

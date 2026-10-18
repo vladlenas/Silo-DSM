@@ -1,0 +1,8 @@
+{
+  "dsm_all": "All torrents",
+  "dsm_search": "Search",
+  "dsm_no_match": "Nothing found",
+  "dsm_missing_title": "Default Web UI is off",
+  "dsm_missing_text": "DSM Style UI uses the built-in \"Default Web UI\" plugin. Enable it in the admin panel → Plugins; DSM Style UI stays the main page as long as it is above it in the list.",
+  "dsm_open_admin": "Open admin panel"
+}
