@@ -72,7 +72,11 @@ def make(root):
     put(root, "internal/web/api_hls.go",
         "package web\n\nfunc ensure() {\n\t\t\tdefault:\n"
         "\t\t\t\tif err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {\n"
-        "\t\t\t\t\treturn nil\n\t\t\t\t}\n}\n")
+        "\t\t\t\t\treturn nil\n\t\t\t\t}\n}\n"
+        "type hlsSession struct {\n\tviewedMarked bool\n}\n"
+        "func seg() {\n\tsession.touch()\n\n"
+        "\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n}\n"
+        "func cleanup() {\n\th.mu.Lock()\n\tcurrent := h.startIndex\n\th.mu.Unlock()\n}\n")
     put(root, "internal/plugin/admin_ui/info.yaml", "id: \"admin-ui\"\n")
 
     ui = "internal/plugin/default_ui/"

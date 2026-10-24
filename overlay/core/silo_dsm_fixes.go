@@ -69,3 +69,27 @@ func (h *hlsSession) siloDSMWait(ctx context.Context, s *Server, dir, name strin
 		last = now
 	}
 }
+
+// siloDSMSetCursor remembers the segment the player asked for.
+func (h *hlsSession) siloDSMSetCursor(index int) {
+	h.mu.Lock()
+	h.siloDSMCursor = index + 1
+	h.mu.Unlock()
+}
+
+// siloDSMCleanupFrom is the segment the cleanup window is counted from;
+// h.mu is held by the caller.
+//
+// Upstream counts it from h.startIndex, the segment ffmpeg was started at.
+// That one does not move while the film plays, so the window ends at
+// start + hlsForwardGap: every segment after the 12th since the start is
+// deleted at the next playlist request, also the ones ffmpeg has just made
+// and the player is about to fetch. The player then waits, ffmpeg is
+// restarted, and the same happens 50-60 s later. The player's position moves
+// with the film.
+func (h *hlsSession) siloDSMCleanupFrom() int {
+	if h.siloDSMCursor > 0 {
+		return h.siloDSMCursor - 1
+	}
+	return h.startIndex
+}
