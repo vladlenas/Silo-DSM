@@ -69,6 +69,10 @@ def make(root):
     # The lines the core fixes change, as in Silo.1.
     put(root, "internal/web/server.go",
         "package web\n\nfunc routes() {\n\tapi := s.router.Group(\"/api\", AuthMiddleware(s.userSvc))\n}\n")
+    put(root, "internal/web/api_hls.go",
+        "package web\n\nfunc ensure() {\n\t\t\tdefault:\n"
+        "\t\t\t\tif err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {\n"
+        "\t\t\t\t\treturn nil\n\t\t\t\t}\n}\n")
     put(root, "internal/plugin/admin_ui/info.yaml", "id: \"admin-ui\"\n")
 
     ui = "internal/plugin/default_ui/"

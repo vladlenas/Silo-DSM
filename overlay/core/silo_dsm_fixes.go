@@ -1,18 +1,19 @@
 package web
 
-// Added by Silo DSM (overlay/apply.py): fixes for Silo.1 until upstream has
-// them.
+// Added by Silo DSM (overlay/apply.py): fixes for Silo.1 until upstream has them.
 
 import (
+	"context"
 	"encoding/hex"
 	"net/http"
+
+	"silo/internal/ffmpeg/hls"
 
 	"github.com/gin-gonic/gin"
 )
 
-// siloDSMValidHash answers 400 for a :hash that is not a 40-character hex
-// info hash. Without it a short hash reaches metainfo.NewHashFromHex, which
-// panics (seen as "hash hex string has bad length" in the log).
+// siloDSMValidHash answers 400 for a :hash that is not 40 hex characters;
+// a short one made the torrent handlers panic.
 func siloDSMValidHash() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if h := c.Param("hash"); h != "" {
@@ -22,5 +23,49 @@ func siloDSMValidHash() gin.HandlerFunc {
 			}
 		}
 		c.Next()
+	}
+}
+
+// siloDSMWait waits for a segment just ahead of the running ffmpeg.
+//
+// Upstream waits hlsSegmentWait (15 s) once and then restarts ffmpeg at the
+// requested segment. A slow transcode (4K HDR to 1080p with tone mapping) or
+// a start after a seek can need longer than that for one segment, and the
+// restart throws away the work in progress, so the next segment is late
+// again: a restart every 15-20 s and stuttering playback.
+//
+// Here the wait goes on while ffmpeg is alive and either still starting (no
+// segment of its own yet) or has made a new segment during the last
+// hlsSegmentWait, until the request ends. A job the throttler paused is
+// resumed: the player is waiting for it. A stuck ffmpeg (no new segment in
+// hlsSegmentWait) still leads to a restart, as upstream.
+func (h *hlsSession) siloDSMWait(ctx context.Context, s *Server, dir, name string, index, start int, done <-chan struct{}) bool {
+	last := lastSegmentIndex(dir)
+	for {
+		h.mu.Lock()
+		j := h.job
+		h.mu.Unlock()
+		if j != nil && j.Paused() {
+			_ = j.Resume()
+		}
+
+		if err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {
+			return true
+		}
+
+		select {
+		case <-done:
+			return false
+		case <-ctx.Done():
+			return false
+		default:
+		}
+
+		now := lastSegmentIndex(dir)
+		starting := now < start
+		if index > now+hlsForwardGap || (!starting && now <= last) {
+			return false
+		}
+		last = now
 	}
 }

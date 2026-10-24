@@ -221,6 +221,13 @@ CORE_FIXES = (
         'api := s.router.Group("/api", AuthMiddleware(s.userSvc), siloDSMValidHash())\n',
         "a short :hash made the torrent handlers panic",
     ),
+    (
+        "internal/web/api_hls.go",
+        "\t\t\t\tif err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {\n",
+        "\t\t\t\t// Silo DSM: wait on while ffmpeg makes progress (silo_dsm_fixes.go)\n"
+        "\t\t\t\tif h.siloDSMWait(ctx, s, dir, name, index, start, done) {\n",
+        "a segment slower than 15 s restarted ffmpeg again and again (4K HDR)",
+    ),
 )
 
 
