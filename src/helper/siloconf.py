@@ -297,10 +297,6 @@ def render_yaml(settings, var=None):
             # that has just woken up may need longer than Silo's 30 s to
             # deliver the first megabytes ("ffprobe failed: signal: killed").
             ("probe_timeout_sec", PROBE_TIMEOUT_SEC),
-            # TEST (hls-wait branch): Silo pauses ffmpeg when it is 4 segments
-            # ahead of the player. On a 4K HDR transcode ffmpeg stalled after
-            # such pauses; this build turns the pausing off to find out.
-            ("throttle", False),
         ]),
     ]
 
