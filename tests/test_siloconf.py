@@ -118,6 +118,7 @@ class YamlTests(Base):
     def test_ffprobe_gets_time_for_a_waking_torrent(self):
         config = parse_config(sc.render_yaml(sc.DEFAULTS, self.var))
         self.assertEqual(int(config["ffmpeg"]["probe_timeout_sec"]), 90)
+        self.assertIs(config["ffmpeg"]["throttle"], False)
 
     def test_log_goes_to_stdout_only(self):
         # Silo prints every line to stdout too; a file would double the log.
