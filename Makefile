@@ -2,9 +2,9 @@
 # three together: SILO_VERSION is the upstream tag (or a name for the commit),
 # SILO_COMMIT the full commit id, and the last number of PKG_VERSION is the
 # Silo build (Silo.1 -> x.y.1).
-SILO_VERSION := Silo.1
-SILO_COMMIT := fc5795e10234d18dda509a781472a82e402322bd
-PKG_VERSION := 0.8.1
+SILO_VERSION := Silo.1-579ed72
+SILO_COMMIT := 579ed72eada1f0804f90549be9a225959363c74b
+PKG_VERSION := 0.9.1
 
 # Only amd64 is released for now (build-package.sh also knows arm64 and arm7).
 ARCHES := amd64

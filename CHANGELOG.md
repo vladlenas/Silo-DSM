@@ -3,24 +3,43 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
-## Unreleased
+## 0.9.1 (2026-10-24)
+
+Silo is updated to the `silo` branch at commit `579ed72` (after `Silo.1`):
+FUSE file system in the core, HLS seeking with the full playlist, safer
+plugins, users and login, many fixes.
 
 ### Added
 
+- **FUSE support:** the library as a read-only folder for Plex, Jellyfin,
+  File Station or SMB, through Silo's FUSE plugin (Store). The Helper status
+  page has a **FUSE** card: `/dev/fuse`, `fusermount`, `user_allow_other`
+  and the current mount. A mount left behind by a crash is released at the
+  next start and after stop. README: how to set it up.
+- **Plex** (built-in plugin, library menu): asks Plex to scan the chosen
+  libraries when torrents are added to, changed in or removed from Silo, at
+  most once every 30 seconds.
 - **Transcoding Profiles** (built-in plugin, library menu): every setting of
   Silo's transcoding profiles on one page, also the ones the admin panel form
   does not show — decoding on the video card, keeping video/audio that needs
   no transcoding, HDR to SDR, quality and bitrate, frame size and rate, audio
   channels, subtitles, HLS segments. Copy a profile, make it the default.
-
 - Helper status page shows where **FFprobe** is (the one next to ffmpeg that
   Silo uses); a missing ffprobe is reported in `Silo.log` at start.
 
+### Changed
+
+- The web pages show Silo's own logo also with the DSM look; the package icon
+  is for DSM only.
+- Silo gives ffprobe 90 seconds (was 30) to read a file before transcoding: a
+  torrent that has just woken up needs time ("ffprobe failed: signal: killed").
+
 ### Fixed
 
+- A torrent address with a broken hash (`/api/torrents/<short>/...`) made
+  Silo panic; it now answers 400.
 - DSM look: ticked check boxes looked empty (white on white) in the admin
   panel, TorrServer Import and the profile editor.
-
 - `Silo.log` no longer gets "helper-auth: denied GET /" every minute: the
   nginx check uses its own quiet address of the Helper.
 - TorrServer Import writes a scheduled check to the log only when it added

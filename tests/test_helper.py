@@ -41,7 +41,7 @@ esac
 LANGS = ("ru", "uk", "lt", "pl")
 # Names and values that stay as they are in every language.
 NOT_TRANSLATED = {
-    "CPU", "DSM", "FFmpeg", "FFprobe", "Silo", "TorrServer Silo", "VAAPI (Intel)", "Silo.log",
+    "CPU", "DSM", "FFmpeg", "FFprobe", "FUSE", "fusermount", "Silo", "TorrServer Silo", "VAAPI (Intel)", "Silo.log",
     "English", "Русский", "Lietuvių", "Polski", "Українська",
 }
 
@@ -186,16 +186,18 @@ class PluginTickTests(Base):
         h.save_settings(form(port=server.server_address[1]))
         return calls
 
-    def test_tick_posts_to_the_plugin(self):
+    def test_tick_posts_to_every_plugin(self):
         calls = self.serve(200)
         self.running(True)
-        self.assertEqual(h.plugin_tick(), 200)
-        self.assertEqual(calls, [h.PLUGIN_TICK_PATH])
+        self.assertEqual(h.plugin_tick(), {p: 200 for p in h.PLUGIN_TICK_PATHS})
+        self.assertEqual(calls, list(h.PLUGIN_TICK_PATHS))
+        self.assertIn("/plugins/torrserver-import/api/tick", calls)
+        self.assertIn("/plugins/plex-scan/api/tick", calls)
 
     def test_missing_plugin_is_harmless(self):
         self.serve(404)
         self.running(True)
-        self.assertEqual(h.plugin_tick(), 404)
+        self.assertEqual(set(h.plugin_tick().values()), {404})
 
     def test_no_call_while_silo_is_stopped(self):
         calls = self.serve(200)
@@ -294,6 +296,67 @@ class NginxProbeTests(Base):
     def test_check_uses_the_probe(self):
         self.assertTrue(h.NGINX_ROUTE_PATH.endswith("/helper/"))
         self.assertEqual(h.NGINX_PROBE, "/nginx-probe")
+
+
+class FuseCardTests(Base):
+    """The status page tells which FUSE condition is missing."""
+
+    def setUp(self):
+        super().setUp()
+        self.dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        for name in ("FUSE_DEVICE", "FUSE_CONF", "FUSE_MOUNTS"):
+            self.addCleanup(setattr, h, name, getattr(h, name))
+        h.FUSE_DEVICE = os.path.join(self.dir, "fuse")
+        h.FUSE_CONF = os.path.join(self.dir, "fuse.conf")
+        h.FUSE_MOUNTS = os.path.join(self.dir, "mounts")
+        self.bin = os.path.join(self.dir, "bin")
+        os.mkdir(self.bin)
+        os.environ["SILO_DSM_FUSERMOUNT_DIRS"] = self.bin
+        self.addCleanup(os.environ.pop, "SILO_DSM_FUSERMOUNT_DIRS", None)
+
+    def write(self, path, text, mode=0o644):
+        with open(path, "w") as f:
+            f.write(text)
+        os.chmod(path, mode)
+
+    def test_nothing_there(self):
+        info = h.fuse_info()
+        self.assertFalse(info["device"])
+        self.assertIsNone(info["fusermount"])
+        self.assertFalse(info["allow_other"])
+        self.assertEqual(info["mounts"], [])
+        card = h.fuse_card()
+        self.assertIn("Not mounted", card)
+        self.assertIn("FUSE is not usable for the package user yet", card)
+
+    def test_ready_and_mounted(self):
+        self.write(h.FUSE_DEVICE, "", 0o666)
+        self.write(os.path.join(self.bin, "fusermount3"), "#!/bin/sh\n", 0o4755)
+        self.write(h.FUSE_CONF, "# comment\nuser_allow_other\n")
+        self.write(h.FUSE_MOUNTS, "/dev/md0 / ext4 rw 0 0\n"
+                   "silo /volume1/video/My\\040Silo fuse.silo ro 0 0\n"
+                   "x /mnt/x fuse.rclone rw 0 0\n")
+        info = h.fuse_info()
+        self.assertTrue(info["device_access"])
+        self.assertEqual(info["fusermount"], os.path.join(self.bin, "fusermount3"))
+        self.assertTrue(info["setuid"])
+        self.assertTrue(info["allow_other"])
+        self.assertEqual(info["mounts"], ["/volume1/video/My Silo"])
+        card = h.fuse_card()
+        self.assertIn("/volume1/video/My Silo", card)
+        self.assertIn("Mount the library from the FUSE plugin", card)
+
+    def test_fusermount_without_setuid_is_reported(self):
+        self.write(os.path.join(self.bin, "fusermount"), "#!/bin/sh\n", 0o755)
+        self.assertIn("no setuid bit", h.fuse_card())
+
+    def test_commented_allow_other_does_not_count(self):
+        self.write(h.FUSE_CONF, "#user_allow_other\n")
+        self.assertFalse(h.fuse_info()["allow_other"])
+
+    def test_status_page_has_the_card(self):
+        self.assertIn("Device /dev/fuse", h.main_page("nas"))
 
 
 class FolderTests(Base):

@@ -52,6 +52,7 @@ stop_daemon ()
         done
         rm -f "${PID_FILE}"
     fi
+    fuse_cleanup
 }
 
 #------------------------------------------------------

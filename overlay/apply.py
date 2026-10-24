@@ -11,13 +11,13 @@ added to the source tree right before `go build`:
   the Default Web UI scripts plus js/dsm.js, so the library works exactly as
   upstream wrote it. Default Web UI itself is not touched: "Make theme" on it
   in the admin panel brings Silo's own look back.
-* TorrServer Import and Transcoding Profiles (plugins/) become built-in
-  plugins.
+* TorrServer Import, Transcoding Profiles and Plex (plugins/) become
+  built-in plugins.
 * internal/web/static/css/style.css (admin panel, login page, plugin pages)
   gets overlay/static/dsm-core.css appended. It only applies under
-  html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme;
-  it also shows the package icon and "TorrServer Silo" instead of Silo's
-  logo. With Silo's own theme every page looks exactly as upstream made it.
+  html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme.
+  Silo's own logo stays on every page (the package icon is for DSM only).
+  With Silo's own theme every page looks exactly as upstream made it.
 * Fixes for Silo bugs that upstream has not fixed yet (core_fixes below):
   each one is a small, exact change; when upstream changes those lines the
   build stops, and the fix is checked against the new code or dropped.
@@ -85,8 +85,8 @@ def core_style(src, overlay):
     css = need(os.path.join(src, "internal/web/static/css/style.css"))
     write(css, read(css).rstrip("\n") + "\n\n" + read(os.path.join(overlay, "static/dsm-core.css")))
 
-    # New files next to Silo's own: the package icon and the theme check.
-    for sub, name in (("img", "dsm-logo.png"), ("js", "silo-look.js")):
+    # New file next to Silo's own: the theme check.
+    for sub, name in (("js", "silo-look.js"),):
         target = os.path.join(need(os.path.join(src, "internal/web/static", sub)), name)
         if os.path.exists(target):
             raise OverlayError("Silo already has internal/web/static/{}/{}".format(sub, name))
@@ -171,6 +171,7 @@ def dsm_ui(src, overlay):
 BUILTIN_PLUGINS = (
     ("torrserver-import", "torrserver_import", "torrserverImportFiles"),
     ("profile-editor", "profile_editor", "profileEditorFiles"),
+    ("plex-scan", "plex_scan", "plexScanFiles"),
 )
 
 
@@ -214,15 +215,6 @@ var {} embed.FS
 
 # (file, exact upstream text, replacement, why)
 CORE_FIXES = (
-    (
-        "internal/web/api_hls.go",
-        "\toptions.Seek = startAt\n",
-        "\toptions.Seek = startAt\n"
-        "\t// Silo DSM: segments of a restarted process keep their numbers, so the\n"
-        "\t// segment the player asked for is the one ffmpeg writes.\n"
-        "\toptions.HLS.StartNumber = startIndex\n",
-        "after a seek ffmpeg restarted at seg0 while the player waited for segN",
-    ),
     (
         "internal/web/server.go",
         'api := s.router.Group("/api", AuthMiddleware(s.userSvc))\n',

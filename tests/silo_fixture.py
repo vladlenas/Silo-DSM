@@ -67,8 +67,6 @@ def make(root):
 
     put(root, "internal/plugin/builtin.go", BUILTIN_GO)
     # The lines the core fixes change, as in Silo.1.
-    put(root, "internal/web/api_hls.go",
-        "package web\n\nfunc start() {\n\toptions.Seek = startAt\n\toptions.Output = \"\"\n}\n")
     put(root, "internal/web/server.go",
         "package web\n\nfunc routes() {\n\tapi := s.router.Group(\"/api\", AuthMiddleware(s.userSvc))\n}\n")
     put(root, "internal/plugin/admin_ui/info.yaml", "id: \"admin-ui\"\n")

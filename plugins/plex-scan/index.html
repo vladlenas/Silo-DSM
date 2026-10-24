@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="plugin.plex.page_title">Plex – Silo</title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/silo-look.js"></script>
+    <script src="/i18n.js"></script>
+    <style>
+        .page-wrap { display: flex; justify-content: center; padding: 24px 32px; min-height: 100vh; }
+        .page-inner { width: 100%; max-width: 800px; }
+        .panel { max-width: 100%; }
+        .form-grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 12px 16px; align-items: center; }
+        .form-grid .input { width: 100%; }
+        .check { display: flex; align-items: center; gap: 8px; }
+        .panel h2:not(:first-child) { margin-top: 24px; }
+        .panel .row { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .panel .hint { margin-top: 8px; }
+        .sections { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .section { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px;
+                   border: 1px solid var(--silo-border); border-radius: 6px; }
+        .section .paths { font-size: 12px; opacity: .75; word-break: break-all; }
+        .msg-ok { color: var(--silo-teal-bright); }
+        .msg-err { color: var(--silo-danger); }
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px;
+                 border-radius: 6px; background: var(--silo-surface); border: 1px solid var(--silo-border);
+                 color: var(--silo-text); opacity: 0; transition: opacity .2s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        @media (max-width: 767px) {
+            .page-wrap { padding: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+    <div class="page-inner">
+        <header class="topbar">
+            <h1 data-i18n="plugin.plex.title">Plex</h1>
+            <a href="/" class="btn btn-secondary btn-sm" data-i18n="plugin.plex.back">Back</a>
+        </header>
+        <section id="view">
+            <div class="panel">
+                <h2 data-i18n="plugin.plex.status_title">Library scan</h2>
+                <p class="hint" data-i18n="plugin.plex.intro">When torrents are added to or removed from Silo, Plex is asked to scan its libraries. Meant for a Plex library on the folder where the FUSE plugin mounts Silo.</p>
+                <div class="row">
+                    <button class="btn" id="btn-scan" type="button" data-i18n="plugin.plex.scan_now">Scan now</button>
+                </div>
+                <p class="hint" id="last-scan"></p>
+                <p class="hint" id="last-error"></p>
+            </div>
+
+            <div class="panel">
+                <h2 data-i18n="plugin.plex.connection_title">Plex server</h2>
+                <div class="form-grid">
+                    <label for="f-url" data-i18n="plugin.plex.url">Address</label>
+                    <input class="input" id="f-url" type="text" placeholder="http://127.0.0.1:32400">
+                    <label for="f-token" data-i18n="plugin.plex.token">Plex token</label>
+                    <input class="input" id="f-token" type="password" autocomplete="new-password">
+                </div>
+                <p class="hint" data-i18n="plugin.plex.token_hint">Leave the token empty to keep the saved one. To find it: Plex Web → any movie → ⋯ → Get Info → View XML; the token is the X-Plex-Token value at the end of the address.</p>
+
+                <h2 data-i18n="plugin.plex.sections_title">Libraries</h2>
+                <p class="hint" data-i18n="plugin.plex.sections_hint">Choose the libraries on the Silo folder. None chosen = all libraries.</p>
+                <div class="row">
+                    <button class="btn btn-secondary" id="btn-sections" type="button" data-i18n="plugin.plex.load_sections">Load libraries from Plex</button>
+                </div>
+                <div class="sections" id="sections"></div>
+                <p class="hint" id="sections-msg"></p>
+
+                <h2 data-i18n="plugin.plex.when_title">When to scan</h2>
+                <div class="form-grid">
+                    <span></span>
+                    <label class="check"><input type="checkbox" id="f-enabled"> <span data-i18n="plugin.plex.enabled">Scan automatically</span></label>
+                    <span></span>
+                    <label class="check"><input type="checkbox" id="f-add"> <span data-i18n="plugin.plex.on_add">when a torrent is added or changed</span></label>
+                    <span></span>
+                    <label class="check"><input type="checkbox" id="f-remove"> <span data-i18n="plugin.plex.on_remove">when a torrent is removed</span></label>
+                </div>
+                <p class="hint" id="gap-hint"></p>
+
+                <div class="row">
+                    <button class="btn" id="btn-save" type="button" data-i18n="plugin.plex.save">Save</button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="/plugins/plex-scan/js/app.js"></script>
+</body>
+</html>

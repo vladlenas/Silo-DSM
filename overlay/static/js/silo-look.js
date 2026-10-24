@@ -6,22 +6,8 @@
     var KEY = 'silo-look';
     var root = document.documentElement;
 
-    // Tab icon: the package icon with DSM Style UI, Silo's own otherwise.
-    var icons = null;
-    function tabIcon(dsm) {
-        if (!icons) {
-            icons = Array.prototype.slice.call(document.querySelectorAll('link[rel="icon"]'));
-            icons.forEach(function (l) { l.setAttribute('data-silo-href', l.getAttribute('href')); });
-        }
-        icons.forEach(function (l) {
-            l.setAttribute('href', dsm ? '/img/dsm-logo.png' : l.getAttribute('data-silo-href'));
-            if (dsm) l.removeAttribute('type'); else if (/\.svg$/.test(l.href)) l.setAttribute('type', 'image/svg+xml');
-        });
-    }
-
     function apply(dsm) {
         root.classList.toggle('silo-dsm', dsm);
-        tabIcon(dsm);
     }
 
     function set(dsm) {

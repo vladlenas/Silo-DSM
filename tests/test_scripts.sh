@@ -117,6 +117,31 @@ check "silo stopped"                         sh -c "! { kill -0 $NEW_SILO 2>/dev
 check "pid file removed"                     [ ! -e "$SYNOPKG_PKGVAR/TorrServerSilo.pid" ]
 check "status says stopped"                  sh -c "! sh '$SSS' status >/dev/null"
 
+echo "== FUSE mounts left over are released"
+mkdir -p "$TMP/fusebin"
+cat > "$TMP/fusebin/fusermount3" <<'FM'
+#!/bin/sh
+echo "$*" >> "$FUSERMOUNT_LOG"
+case "$*" in *stuck*) exit 1;; esac
+exit 0
+FM
+chmod +x "$TMP/fusebin/fusermount3"
+cat > "$TMP/mounts" <<'MT'
+/dev/md0 / ext4 rw 0 0
+silo /volume1/video/Silo\040Library fuse.silo ro,nosuid,nodev 0 0
+silo /volume1/video/stuck fuse.silo ro 0 0
+other /volume1/x fuse.rclone rw 0 0
+MT
+(
+    export PATH="$TMP/fusebin:$PATH" FUSE_MOUNTS_FILE="$TMP/mounts" FUSERMOUNT_LOG="$TMP/fusermount.log"
+    . "$TMP/scripts/service-setup"
+    fuse_cleanup
+)
+check "silo mount released (space decoded)"  grep -qx -- '-u -z /volume1/video/Silo Library' "$TMP/fusermount.log"
+check "other FUSE mounts left alone"        sh -c "! grep -q rclone '$TMP/fusermount.log'"
+check "release logged"                      grep -q 'Released a FUSE mount left over at /volume1/video/Silo Library' "$SYNOPKG_PKGVAR/Silo.log"
+check "failure tells what to do"            grep -q "sudo umount -l '/volume1/video/stuck'" "$SYNOPKG_PKGVAR/Silo.log"
+
 echo "== missing ffprobe is logged"
 rm -f "$FFMPEG_DIR/ffprobe"
 sh "$SSS" start; sleep 1

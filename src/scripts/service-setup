@@ -119,11 +119,39 @@ write_silo_config()
     return ${_rc}
 }
 
+# FUSE: Silo (its FUSE plugin) mounts the library through fusermount, as
+# file system type "fuse.silo". A Silo that was killed leaves the mount
+# behind ("Transport endpoint is not connected"), and the folder cannot be
+# mounted again until it is released. Runs before every start and after stop.
+# FUSE_MOUNTS_FILE can be set by the tests.
+fuse_cleanup()
+{
+    _fusermount=""
+    for _bin in fusermount3 fusermount; do
+        if command -v "${_bin}" > /dev/null 2>&1; then
+            _fusermount="${_bin}"
+            break
+        fi
+    done
+
+    awk '$3 == "fuse.silo" { print $2 }' "${FUSE_MOUNTS_FILE:-/proc/mounts}" 2>/dev/null |
+    while read -r _mount; do
+        # /proc/mounts writes a space as \040
+        _mount=$(printf '%b' "${_mount}")
+        if [ -n "${_fusermount}" ] && "${_fusermount}" -u -z "${_mount}" 2>/dev/null; then
+            service_log service "Released a FUSE mount left over at ${_mount}"
+        else
+            service_log service "Warning: a FUSE mount is left over at ${_mount} and could not be released; run \"sudo umount -l '${_mount}'\" over SSH"
+        fi
+    done
+}
+
 # Called by start-stop-status and restart-silo right before Silo is started
 # (in the same shell, so the folder change below applies to Silo).
 service_prestart()
 {
     write_silo_config
+    fuse_cleanup
 
     # Silo's working folder. Relative paths of Silo's own settings end up
     # here, notably the disk cache folder ("torrents" by default), which

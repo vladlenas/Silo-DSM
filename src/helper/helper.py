@@ -11,6 +11,7 @@ import pwd
 import re
 import shutil
 import subprocess
+import stat
 import sys
 import time
 import threading
@@ -314,6 +315,7 @@ CARD_ICONS = {
     "key": '<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M17 6l3 3M14.5 8.5l2 2"/>',
     "lock": '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
     "globe": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.4 3.8 5.4 3.8 9s-1.3 6.6-3.8 9c-2.5-2.4-3.8-5.4-3.8-9S9.5 5.4 12 3z"/>',
+    "folder": '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     "film": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/>',
 }
 
@@ -2017,6 +2019,114 @@ HWACCEL_LABELS = {
 }
 
 
+# FUSE: Silo's FUSE plugin mounts the library through fusermount as the
+# package user. These are the conditions for that, read here so the status
+# page can say which one is missing. FUSE_* can be set by the tests.
+FUSE_DEVICE = os.environ.get("SILO_DSM_FUSE_DEVICE") or "/dev/fuse"
+FUSE_CONF = os.environ.get("SILO_DSM_FUSE_CONF") or "/etc/fuse.conf"
+FUSE_MOUNTS = os.environ.get("SILO_DSM_FUSE_MOUNTS") or "/proc/mounts"
+FUSERMOUNT_NAMES = ("fusermount3", "fusermount")
+FUSERMOUNT_DIRS = ("/usr/bin", "/bin", "/usr/sbin", "/sbin", "/usr/local/bin")
+
+
+def find_fusermount():
+    """(path, setuid) of fusermount3 or fusermount, or (None, False)."""
+    dirs = os.environ.get("SILO_DSM_FUSERMOUNT_DIRS")
+    dirs = dirs.split(":") if dirs else FUSERMOUNT_DIRS
+    for name in FUSERMOUNT_NAMES:
+        for folder in dirs:
+            path = os.path.join(folder, name)
+            if os.path.isfile(path) and os.access(path, os.X_OK):
+                try:
+                    setuid = bool(os.stat(path).st_mode & stat.S_ISUID)
+                except OSError:
+                    setuid = False
+                return path, setuid
+    return None, False
+
+
+def fuse_allow_other():
+    try:
+        with open(FUSE_CONF, encoding="utf-8", errors="replace") as f:
+            return any(line.strip().startswith("user_allow_other") for line in f)
+    except OSError:
+        return False
+
+
+def silo_fuse_mounts():
+    """Mount points of Silo's FUSE file system (type fuse.silo)."""
+    found = []
+    try:
+        with open(FUSE_MOUNTS, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 3 and parts[2] == "fuse.silo":
+                    found.append(parts[1].replace("\\040", " "))
+    except OSError:
+        pass
+    return found
+
+
+def fuse_info():
+    exists = os.path.exists(FUSE_DEVICE)
+    fusermount, setuid = find_fusermount()
+    return {
+        "device": exists,
+        "device_access": exists and os.access(FUSE_DEVICE, os.R_OK | os.W_OK),
+        "fusermount": fusermount,
+        "setuid": setuid,
+        "allow_other": fuse_allow_other(),
+        "mounts": silo_fuse_mounts(),
+    }
+
+
+def fuse_card():
+    info = fuse_info()
+
+    if not info["device"]:
+        device = '<span class="value-bad">Not found</span>'
+    elif info["device_access"]:
+        device = '<span class="value-good">Available</span>'
+    else:
+        device = '<span class="value-bad">No access</span>'
+
+    if not info["fusermount"]:
+        fusermount = '<span class="value-bad">Not found</span>'
+    else:
+        fusermount = '<span translate="no">{}</span>'.format(html.escape(info["fusermount"]))
+        if not info["setuid"]:
+            fusermount += ' <span class="value-bad">no setuid bit</span>'
+
+    allow_other = ('<span class="value-good">Allowed</span>' if info["allow_other"]
+                   else 'No: only the package user sees the files')
+
+    if info["mounts"]:
+        mounts = "<br>".join('<span translate="no">{}</span>'.format(html.escape(m)) for m in info["mounts"])
+    else:
+        mounts = "Not mounted"
+
+    ready = info["device_access"] and info["fusermount"] and info["setuid"]
+    hint = ("Mount the library from the FUSE plugin in Silo (admin panel → Plugins → Store)."
+            if ready else
+            "FUSE is not usable for the package user yet; see the README of Silo DSM, section FUSE.")
+
+    return """
+<div class="dashboard-card wide-card">
+    <div class="dashboard-card-title">
+        <span class="metric-icon" data-icon="folder"></span>
+        <span>FUSE</span>
+    </div>
+    <table class="metric-table">
+        <tr><td>Device /dev/fuse</td><td>{device}</td></tr>
+        <tr><td>fusermount</td><td>{fusermount}</td></tr>
+        <tr><td>Other users and apps (allow_other)</td><td>{allow_other}</td></tr>
+        <tr><td>Mounted at</td><td>{mounts}</td></tr>
+    </table>
+    <div class="help">{hint}</div>
+</div>
+""".format(device=device, fusermount=fusermount, allow_other=allow_other, mounts=mounts, hint=hint)
+
+
 def transcoding_card(settings):
     info = get_ffmpeg_info()
     devices = get_dri_devices()
@@ -2204,6 +2314,8 @@ def main_page(host):
 
 {transcoding}
 
+{fuse}
+
 <div class="dashboard-card info-card">
     <div class="info-maintainer-top">TorrServer Silo for Synology, maintained by vladlenas</div>
 
@@ -2246,6 +2358,7 @@ def main_page(host):
         auth=yes_no(settings["owner_password"]),
         uptime=html.escape(get_silo_uptime()),
         transcoding=transcoding_card(settings),
+        fuse=fuse_card(),
         dsm=html.escape(get_dsm_version()),
         model=html.escape(get_nas_model()),
         cpu=html.escape(get_cpu_model()),
@@ -3020,29 +3133,36 @@ def log_rotation_loop():
         time.sleep(10)
 
 
-# Silo plugins have no timers. The "TorrServer Import" plugin
-# (plugins/torrserver-import) runs its automatic scan when this endpoint is
-# called and decides itself whether its interval is over, so one call a
-# minute is enough. A 404 (plugin not installed) or a stopped Silo is ignored.
-PLUGIN_TICK_PATH = "/plugins/torrserver-import/api/tick"
+# Built-in plugins that need a wake-up (Silo plugins have no timers): the
+# scheduled TorrServer import and the delayed Plex scan. Each decides itself
+# whether anything is due, so a call a minute is harmless.
+PLUGIN_TICK_PATHS = (
+    "/plugins/torrserver-import/api/tick",
+    "/plugins/plex-scan/api/tick",
+)
 PLUGIN_TICK_SECONDS = 60
 
 
 def plugin_tick():
-    """One wake-up call; returns the HTTP status, or None when Silo is
-    stopped or could not be reached."""
+    """One wake-up call to every plugin; returns {path: HTTP status or None},
+    or None when Silo is stopped."""
     if not is_silo_running():
         return None
-    url = "http://127.0.0.1:{}{}".format(get_settings()["port"], PLUGIN_TICK_PATH)
-    request = urllib.request.Request(url, data=b"", method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            response.read()
-            return response.status
-    except urllib.error.HTTPError as e:
-        return e.code
-    except Exception:
-        return None
+    port = get_settings()["port"]
+    results = {}
+    for path in PLUGIN_TICK_PATHS:
+        url = "http://127.0.0.1:{}{}".format(port, path)
+        request = urllib.request.Request(url, data=b"", method="POST")
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                response.read()
+                results[path] = response.status
+        except urllib.error.HTTPError as e:
+            e.close()
+            results[path] = e.code
+        except Exception:
+            results[path] = None
+    return results
 
 
 # DSM's nginx reaches this Helper through a rule that DSM itself registers

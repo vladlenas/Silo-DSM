@@ -1,0 +1,33 @@
+# Tells Plex to scan its libraries when torrents come and go in Silo, so a
+# library on Silo's FUSE folder stays up to date without scheduled scans.
+id: "plex-scan"
+name: "Plex"
+version: "1.0.0"
+author: "Silo DSM"
+description: "Scans Plex libraries when torrents are added to or removed from Silo"
+entry: "service.js"
+icon: "/img/ico-plex.svg"
+
+menu:
+  - title: "Plex"
+    title_key: "plugin.plex.title"
+    route: "/"
+    rank: 100
+    icon: "/img/ico-plex.svg"
+
+events:
+  - "system:boot"
+  - "torrent:metadata"
+  - "user:torrent:removed"
+  - "user:torrent:updated"
+
+routes:
+  - "/"
+  - "/index.html"
+  - "/js/*"
+  - "/img/*"
+  - "/api/status"
+  - "/api/settings"
+  - "/api/sections"
+  - "/api/scan"
+  - "/api/tick"

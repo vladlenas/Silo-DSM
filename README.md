@@ -66,6 +66,42 @@ library). It copies the torrent list from TorrServer (e.g. TorrServer DSM on
 
 Not needed? Disable it in the admin panel → Plugins.
 
+## FUSE: the library as a folder
+
+Silo can show its library as a read-only folder: categories, torrents and
+their files, for Plex, Jellyfin, File Station or SMB. Files are streamed from
+the torrent when read.
+
+1. In a shared folder (e.g. `video`) create an empty folder, e.g. `Silo`, and
+   give the system user **TorrServerSilo** Read/Write on the shared folder
+   (Control Panel → Shared Folder → Edit → Permissions → System internal user).
+2. Silo → admin panel → **Plugins** → Store → install **FUSE**. On its page
+   enter `/volume1/video/Silo`, mount, and turn on mounting at start.
+3. Other users and apps (Plex, SMB) only see the files with **allow other
+   users** turned on in the plugin. That needs `user_allow_other` in
+   `/etc/fuse.conf`, once, over SSH:
+   `echo user_allow_other | sudo tee -a /etc/fuse.conf`
+   (a DSM update may reset this file).
+
+Helper → Status → **FUSE** shows whether `/dev/fuse`, `fusermount` and
+`user_allow_other` are there and where Silo is mounted. A mount left behind by
+a crash is released at the next start.
+
+## Plex
+
+**Plex** (built-in plugin, library menu) asks Plex to scan its libraries when
+torrents are added to, changed in or removed from Silo, so a Plex library on
+the FUSE folder stays current without scheduled scans.
+
+1. Enter the Plex address (`http://127.0.0.1:32400` on the same NAS) and the
+   Plex token (Plex Web → any movie → ⋯ → Get Info → View XML → the
+   `X-Plex-Token` value in the address).
+2. **Load libraries from Plex**, tick the libraries on the Silo folder.
+3. Turn on **Scan automatically** and save.
+
+Plex is asked at most once every 30 seconds; changes in between are sent
+together.
+
 ## Transcoding profiles
 
 The admin panel creates a profile with a few fields only. **Transcoding
@@ -101,8 +137,9 @@ make clean
 ```
 
 Needs Go 1.26, git, xz and Python 3; `overlay/apply.py` adds DSM Style UI
-and TorrServer Import to the Silo source as built-in plugins before compiling
-and stops the build when an upstream change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
+and the plugins of `plugins/` to the Silo source as built-in plugins before
+compiling, plus small fixes for Silo bugs (`overlay/core/`), and stops the
+build when an upstream change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
 `PKG_VERSION`; a change of `PKG_VERSION` on `main` builds and publishes a
 GitHub pre-release with the `.spk` and `SHA256SUMS`.
 

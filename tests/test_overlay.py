@@ -70,9 +70,8 @@ class OverlayTests(unittest.TestCase):
         # upstream scripts copied unchanged, test files left out
         self.assertEqual(read(self.path(ui + "js/app.js")), "// upstream app.js\n")
         self.assertFalse(os.path.exists(self.path(ui + "js/ui_test.js")))
-        # own icon replaces the upstream logo in the copy only
-        with open(self.path(ui + "img/logo.png"), "rb") as f:
-            self.assertTrue(f.read().startswith(b"\x89PNG"))
+        # Silo's own logo stays
+        self.assertEqual(read(self.path(ui + "img/logo.png")), "upstream logo\n")
         ru = json.loads(read(self.path(ui + "i18n/ru.json")))
         self.assertEqual(ru["library"], "Библиотека")
         self.assertEqual(ru["dsm_search"], "Поиск")
@@ -85,7 +84,7 @@ class OverlayTests(unittest.TestCase):
         self.assertIn("//go:embed all:profile_editor", go)
         order = [go.index('"dsm_ui"}'), go.index('"default_ui"}'),
                  go.index('"admin_ui"}'), go.index('"torrserver_import"}'),
-                 go.index('"profile_editor"}')]
+                 go.index('"profile_editor"}'), go.index('"plex_scan"}')]
         self.assertEqual(order, sorted(order))
 
     def test_profile_editor_is_built_in(self):
@@ -128,26 +127,25 @@ class OverlayTests(unittest.TestCase):
         self.assertIn("<h1>SILO</h1>", read(self.path("internal/web/static/login.html")))
         self.assertIn(">SILO</span>", read(self.path("internal/plugin/admin_ui/index.html")))
         self.assertEqual(read(self.path("internal/web/static/img/favicon.svg")), "upstream image\n")
-        with open(self.path("internal/web/static/img/dsm-logo.png"), "rb") as f:
-            self.assertTrue(f.read().startswith(b"\x89PNG"))
+        # Silo's logo everywhere on the web, the package icon only in DSM
+        self.assertFalse(os.path.exists(self.path("internal/web/static/img/dsm-logo.png")))
+        self.assertNotIn("dsm-logo", read(self.path("internal/web/static/css/style.css")))
+        self.assertNotIn("dsm-logo", read(self.path("internal/web/static/js/silo-look.js")))
         css = read(self.path("internal/web/static/css/style.css"))
         self.assertIn('content: "TorrServer Silo"', css)
 
     def test_core_fixes(self):
         self.assertEqual(self.apply(), (0, ""))
-        hls = read(self.path("internal/web/api_hls.go"))
-        self.assertIn("options.HLS.StartNumber = startIndex", hls)
-        self.assertLess(hls.index("options.Seek = startAt"), hls.index("options.HLS.StartNumber"))
         server = read(self.path("internal/web/server.go"))
         self.assertIn("AuthMiddleware(s.userSvc), siloDSMValidHash())", server)
         self.assertIn("func siloDSMValidHash()", read(self.path("internal/web/silo_dsm_fixes.go")))
 
-    def test_changed_hls_code_stops_the_build(self):
-        with open(self.path("internal/web/api_hls.go"), "w") as f:
+    def test_changed_server_code_stops_the_build(self):
+        with open(self.path("internal/web/server.go"), "w") as f:
             f.write("package web\n")
         code, err = self.apply()
         self.assertEqual(code, 1)
-        self.assertIn("api_hls.go", err)
+        self.assertIn("server.go", err)
 
     def test_twice_is_once(self):
         self.git_commit()

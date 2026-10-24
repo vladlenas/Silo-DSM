@@ -48,14 +48,8 @@ html.silo-dsm .sidebar {
 
 html.silo-dsm .brand { border-bottom-color: #e5e9ef; }
 
-/* Package icon and name instead of Silo's logo (the page keeps "SILO" and
-   Silo's icon for its own theme) */
-html.silo-dsm .logo-mini,
-html.silo-dsm .login-brand img {
-    content: url(/img/dsm-logo.png);
-    border-radius: 0;
-}
-
+/* Silo's own logo stays (the package icon belongs to DSM); only the name is
+   written out instead of the spaced "SILO" */
 html.silo-dsm .logo-mini { width: 32px; height: 32px; }
 
 html.silo-dsm .brand-name,
