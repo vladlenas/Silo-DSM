@@ -3,7 +3,16 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
-## Unreleased
+## 0.10.1 (2026-10-24)
+
+Silo stays at commit `579ed72`.
+
+### Changed
+
+- **Plex is no longer built in**: few need it. It is attached to the release
+  as `plex-scan-1.0.0.zip`; upload it in Silo → admin panel → Plugins. Silo
+  keeps plugin settings by plugin id, so the 0.9.1 settings should come back
+  with the zip.
 
 ### Fixed
 

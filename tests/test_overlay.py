@@ -84,7 +84,8 @@ class OverlayTests(unittest.TestCase):
         self.assertIn("//go:embed all:profile_editor", go)
         order = [go.index('"dsm_ui"}'), go.index('"default_ui"}'),
                  go.index('"admin_ui"}'), go.index('"torrserver_import"}'),
-                 go.index('"profile_editor"}'), go.index('"plex_scan"}')]
+                 go.index('"profile_editor"}')]
+        self.assertNotIn("plex", go)
         self.assertEqual(order, sorted(order))
 
     def test_profile_editor_is_built_in(self):

@@ -4,14 +4,18 @@
 # Silo build (Silo.1 -> x.y.1).
 SILO_VERSION := Silo.1-579ed72
 SILO_COMMIT := 579ed72eada1f0804f90549be9a225959363c74b
-PKG_VERSION := 0.9.1
+PKG_VERSION := 0.10.1
 
 # Only amd64 is released for now (build-package.sh also knows arm64 and arm7).
 ARCHES := amd64
 
-.PHONY: all binaries clean
+.PHONY: all binaries plugins clean
 
-all: $(addprefix silo-,$(ARCHES))
+# Optional Silo plugins, released as zips next to the package (Silo → admin
+# panel → Plugins → upload). The others in plugins/ are built into Silo.
+PLUGIN_ZIPS := plex-scan
+
+all: $(addprefix silo-,$(ARCHES)) plugins
 
 silo-%:
 	@./build-package.sh "$(SILO_VERSION)" "$(SILO_COMMIT)" "$*" "$(PKG_VERSION)"
@@ -20,6 +24,14 @@ silo-%:
 binaries:
 	@for arch in $(ARCHES); do \
 		BUILD_ONLY=1 ./build-package.sh "$(SILO_VERSION)" "$(SILO_COMMIT)" "$$arch" "$(PKG_VERSION)" || exit 1; \
+	done
+
+plugins:
+	@mkdir -p spk
+	@for p in $(PLUGIN_ZIPS); do \
+		v=$$(sed -n 's/^version: *"\(.*\)"/\1/p' plugins/$$p/info.yaml); \
+		python3 -c 'import sys, os, zipfile; src, out = sys.argv[1], sys.argv[2]; z = zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED); [z.write(os.path.join(r, f), os.path.relpath(os.path.join(r, f), src)) for r, _, fs in sorted(os.walk(src)) for f in sorted(fs)]; z.close()' plugins/$$p spk/$$p-$$v.zip || exit 1; \
+		echo ">>> spk/$$p-$$v.zip"; \
 	done
 
 clean:

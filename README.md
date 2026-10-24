@@ -87,17 +87,20 @@ Helper → Status → **FUSE** shows whether `/dev/fuse`, `fusermount` and
 `user_allow_other` are there and where Silo is mounted. A mount left behind by
 a crash is released at the next start.
 
-## Plex
+## Plex (optional plugin)
 
-**Plex** (built-in plugin, library menu) asks Plex to scan its libraries when
-torrents are added to, changed in or removed from Silo, so a Plex library on
-the FUSE folder stays current without scheduled scans.
+`plex-scan-<version>.zip` (attached to each release, not built in) asks Plex
+to scan its libraries when torrents are added to, changed in or removed from
+Silo, so a Plex library on the FUSE folder stays current without scheduled
+scans.
 
-1. Enter the Plex address (`http://127.0.0.1:32400` on the same NAS) and the
+1. Silo → admin panel → **Plugins** → upload the zip; **Plex** appears in the
+   library menu.
+2. Enter the Plex address (`http://127.0.0.1:32400` on the same NAS) and the
    Plex token (Plex Web → any movie → ⋯ → Get Info → View XML → the
    `X-Plex-Token` value in the address).
-2. **Load libraries from Plex**, tick the libraries on the Silo folder.
-3. Turn on **Scan automatically** and save.
+3. **Load libraries from Plex**, tick the libraries on the Silo folder, turn
+   on **Scan automatically** and save.
 
 Plex is asked at most once every 30 seconds; changes in between are sent
 together.
@@ -133,7 +136,7 @@ To switch: admin panel → Plugins → **Make theme** on the other one.
 ## Building
 
 ```sh
-make        # spk/Silo-DSM-<version>-amd64.spk
+make        # spk/Silo-DSM-<version>-amd64.spk + spk/plex-scan-<version>.zip
 make clean
 ```
 
@@ -142,7 +145,7 @@ and the plugins of `plugins/` to the Silo source as built-in plugins before
 compiling, plus small fixes for Silo bugs (`overlay/core/`), and stops the
 build when an upstream change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
 `PKG_VERSION`; a change of `PKG_VERSION` on `main` builds and publishes a
-GitHub pre-release with the `.spk` and `SHA256SUMS`.
+GitHub pre-release with the `.spk`, the Plex plugin zip and `SHA256SUMS`.
 
 Tests:
 

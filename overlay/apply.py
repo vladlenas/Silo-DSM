@@ -11,8 +11,8 @@ added to the source tree right before `go build`:
   the Default Web UI scripts plus js/dsm.js, so the library works exactly as
   upstream wrote it. Default Web UI itself is not touched: "Make theme" on it
   in the admin panel brings Silo's own look back.
-* TorrServer Import, Transcoding Profiles and Plex (plugins/) become
-  built-in plugins.
+* TorrServer Import and Transcoding Profiles (plugins/) become built-in
+  plugins. Plex is not built in: it goes next to the package as a zip.
 * internal/web/static/css/style.css (admin panel, login page, plugin pages)
   gets overlay/static/dsm-core.css appended. It only applies under
   html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme.
@@ -166,12 +166,12 @@ def dsm_ui(src, overlay):
         write(dest, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
-# Plugins of this repository that are compiled into Silo:
+# Plugins of this repository that are compiled into Silo (plugins/plex-scan
+# is not: few need it, it is released as a zip next to the package):
 # (folder in plugins/, folder in internal/plugin/, Go variable)
 BUILTIN_PLUGINS = (
     ("torrserver-import", "torrserver_import", "torrserverImportFiles"),
     ("profile-editor", "profile_editor", "profileEditorFiles"),
-    ("plex-scan", "plex_scan", "plexScanFiles"),
 )
 
 
