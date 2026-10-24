@@ -221,15 +221,59 @@ CORE_FIXES = (
         'api := s.router.Group("/api", AuthMiddleware(s.userSvc), siloDSMValidHash())\n',
         "a short :hash made the torrent handlers panic",
     ),
+    (
+        "internal/web/api_hls.go",
+        "\t\t\t\tif err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {\n",
+        "\t\t\t\t// Silo DSM: wait on while ffmpeg makes progress (silo_dsm_fixes.go)\n"
+        "\t\t\t\tif h.siloDSMWait(ctx, s, dir, name, index, start, done) {\n",
+        "a segment slower than 15 s restarted ffmpeg again and again (4K HDR)",
+    ),
+    (
+        "internal/web/api_hls.go",
+        "\tviewedMarked bool\n}\n",
+        "\tviewedMarked bool\n\n"
+        "\t// Silo DSM: segment the player asked for last, plus one (0: none yet)\n"
+        "\tsiloDSMCursor int\n}\n",
+        "the cleanup window (next entry) needs the player's position",
+    ),
+    (
+        "internal/web/api_hls.go",
+        "\tsession.touch()\n\n\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n",
+        "\tsession.touch()\n\tsession.siloDSMSetCursor(index)\n\n"
+        "\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n",
+        "the cleanup window (next entry) needs the player's position",
+    ),
+    (
+        "internal/web/api_hls.go",
+        "\tcurrent := h.startIndex\n\th.mu.Unlock()\n",
+        "\tcurrent := h.siloDSMCleanupFrom()\n\th.mu.Unlock()\n",
+        "cleanup kept segments only up to ffmpeg's start + 12 and deleted the "
+        "ones the player needed next: playback broke 50-60 s after every start",
+    ),
+    (
+        "internal/ffmpeg/job/throttle.go",
+        "\tproduced := countSegmentsFrom(t.job.WorkDir, start)\n",
+        "\tproduced := siloDSMProducedFrom(t.job.WorkDir, start) // Silo DSM\n",
+        "ffmpeg deletes old segments (sliding window), so counting files "
+        "never let the throttle pause it: ffmpeg ran ahead and deleted "
+        "segments before the player fetched them",
+    ),
+)
+
+
+# New Go files of the fixes: (file in overlay/core/, package folder in Silo)
+CORE_FILES = (
+    ("silo_dsm_fixes.go", "internal/web"),
+    ("silo_dsm_throttle.go", "internal/ffmpeg/job"),
 )
 
 
 def core_fixes(src, overlay):
-    web = need(os.path.join(src, "internal/web"))
-    target = os.path.join(web, "silo_dsm_fixes.go")
-    if os.path.exists(target):
-        raise OverlayError("Silo already has internal/web/silo_dsm_fixes.go")
-    shutil.copyfile(os.path.join(overlay, "core", "silo_dsm_fixes.go"), target)
+    for name, folder in CORE_FILES:
+        target = os.path.join(need(os.path.join(src, folder)), name)
+        if os.path.exists(target):
+            raise OverlayError("Silo already has {}/{}".format(folder, name))
+        shutil.copyfile(os.path.join(overlay, "core", name), target)
     for rel, old, new, _why in CORE_FIXES:
         replace_once(os.path.join(src, rel), old, new)
 

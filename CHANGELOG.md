@@ -3,6 +3,27 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## 0.11.1 (2026-10-24)
+
+Silo stays at commit `579ed72`, with fixes for HLS transcoding that are sent
+to its author.
+
+### Fixed
+
+- **Transcoding stopped about a minute after every start or seek** (seen with
+  4K HDR to 1080p in Chrome, Just Player and ViMu). ffmpeg keeps only its
+  newest 7 segments on disk, and Silo's throttle counted segment files, so
+  once ffmpeg began to delete old ones it never paused ffmpeg again: ffmpeg
+  ran ahead and deleted segments the player had not fetched yet. The throttle
+  now counts segments by number; ffmpeg stays a few segments ahead of the
+  player. A 12-minute test played without a stop.
+- Silo restarted ffmpeg when a segment just ahead took longer than 15 seconds,
+  even while ffmpeg was working; it now waits while ffmpeg keeps making
+  segments.
+- The segments kept on disk are counted from the player's position, not from
+  where ffmpeg was started (a player that reloads the playlist lost the
+  segments it needed next).
+
 ## 0.10.1 (2026-10-24)
 
 Silo stays at commit `579ed72`.

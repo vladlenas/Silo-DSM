@@ -140,6 +140,25 @@ class OverlayTests(unittest.TestCase):
         server = read(self.path("internal/web/server.go"))
         self.assertIn("AuthMiddleware(s.userSvc), siloDSMValidHash())", server)
         self.assertIn("func siloDSMValidHash()", read(self.path("internal/web/silo_dsm_fixes.go")))
+        hls = read(self.path("internal/web/api_hls.go"))
+        self.assertIn("if h.siloDSMWait(ctx, s, dir, name, index, start, done) {", hls)
+        self.assertNotIn("hlsSegmentWait, done); err == nil", hls)
+        self.assertIn("func (h *hlsSession) siloDSMWait(", read(self.path("internal/web/silo_dsm_fixes.go")))
+        self.assertIn("\tsiloDSMCursor int\n}", hls)
+        self.assertIn("session.siloDSMSetCursor(index)", hls)
+        self.assertIn("current := h.siloDSMCleanupFrom()", hls)
+        self.assertNotIn("current := h.startIndex", hls)
+        throttle = read(self.path("internal/ffmpeg/job/throttle.go"))
+        self.assertIn("produced := siloDSMProducedFrom(t.job.WorkDir, start)", throttle)
+        self.assertIn("func siloDSMProducedFrom(",
+                      read(self.path("internal/ffmpeg/job/silo_dsm_throttle.go")))
+
+    def test_changed_hls_code_stops_the_build(self):
+        with open(self.path("internal/web/api_hls.go"), "w") as f:
+            f.write("package web\n")
+        code, err = self.apply()
+        self.assertEqual(code, 1)
+        self.assertIn("api_hls.go", err)
 
     def test_changed_server_code_stops_the_build(self):
         with open(self.path("internal/web/server.go"), "w") as f:
