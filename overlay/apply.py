@@ -250,15 +250,30 @@ CORE_FIXES = (
         "cleanup kept segments only up to ffmpeg's start + 12 and deleted the "
         "ones the player needed next: playback broke 50-60 s after every start",
     ),
+    (
+        "internal/ffmpeg/job/throttle.go",
+        "\tproduced := countSegmentsFrom(t.job.WorkDir, start)\n",
+        "\tproduced := siloDSMProducedFrom(t.job.WorkDir, start) // Silo DSM\n",
+        "ffmpeg deletes old segments (sliding window), so counting files "
+        "never let the throttle pause it: ffmpeg ran ahead and deleted "
+        "segments before the player fetched them",
+    ),
+)
+
+
+# New Go files of the fixes: (file in overlay/core/, package folder in Silo)
+CORE_FILES = (
+    ("silo_dsm_fixes.go", "internal/web"),
+    ("silo_dsm_throttle.go", "internal/ffmpeg/job"),
 )
 
 
 def core_fixes(src, overlay):
-    web = need(os.path.join(src, "internal/web"))
-    target = os.path.join(web, "silo_dsm_fixes.go")
-    if os.path.exists(target):
-        raise OverlayError("Silo already has internal/web/silo_dsm_fixes.go")
-    shutil.copyfile(os.path.join(overlay, "core", "silo_dsm_fixes.go"), target)
+    for name, folder in CORE_FILES:
+        target = os.path.join(need(os.path.join(src, folder)), name)
+        if os.path.exists(target):
+            raise OverlayError("Silo already has {}/{}".format(folder, name))
+        shutil.copyfile(os.path.join(overlay, "core", name), target)
     for rel, old, new, _why in CORE_FIXES:
         replace_once(os.path.join(src, rel), old, new)
 

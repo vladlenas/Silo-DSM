@@ -77,6 +77,9 @@ def make(root):
         "func seg() {\n\tsession.touch()\n\n"
         "\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n}\n"
         "func cleanup() {\n\th.mu.Lock()\n\tcurrent := h.startIndex\n\th.mu.Unlock()\n}\n")
+    put(root, "internal/ffmpeg/job/throttle.go",
+        "package job\n\nfunc (t *throttler) check() {\n\tstart := t.job.StartIndex()\n"
+        "\tproduced := countSegmentsFrom(t.job.WorkDir, start)\n}\n")
     put(root, "internal/plugin/admin_ui/info.yaml", "id: \"admin-ui\"\n")
 
     ui = "internal/plugin/default_ui/"

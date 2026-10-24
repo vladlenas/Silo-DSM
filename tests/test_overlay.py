@@ -148,6 +148,10 @@ class OverlayTests(unittest.TestCase):
         self.assertIn("session.siloDSMSetCursor(s, index)", hls)
         self.assertIn("current := h.siloDSMCleanupFrom(s)", hls)
         self.assertNotIn("current := h.startIndex", hls)
+        throttle = read(self.path("internal/ffmpeg/job/throttle.go"))
+        self.assertIn("produced := siloDSMProducedFrom(t.job.WorkDir, start)", throttle)
+        self.assertIn("func siloDSMProducedFrom(",
+                      read(self.path("internal/ffmpeg/job/silo_dsm_throttle.go")))
 
     def test_changed_hls_code_stops_the_build(self):
         with open(self.path("internal/web/api_hls.go"), "w") as f:
