@@ -239,14 +239,14 @@ CORE_FIXES = (
     (
         "internal/web/api_hls.go",
         "\tsession.touch()\n\n\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n",
-        "\tsession.touch()\n\tsession.siloDSMSetCursor(index)\n\n"
+        "\tsession.touch()\n\tsession.siloDSMSetCursor(s, index)\n\n"
         "\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n",
         "the cleanup window (next entry) needs the player's position",
     ),
     (
         "internal/web/api_hls.go",
         "\tcurrent := h.startIndex\n\th.mu.Unlock()\n",
-        "\tcurrent := h.siloDSMCleanupFrom()\n\th.mu.Unlock()\n",
+        "\tcurrent := h.siloDSMCleanupFrom(s)\n\th.mu.Unlock()\n",
         "cleanup kept segments only up to ffmpeg's start + 12 and deleted the "
         "ones the player needed next: playback broke 50-60 s after every start",
     ),

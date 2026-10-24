@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"silo/internal/ffmpeg/hls"
+	"silo/internal/log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -64,17 +65,23 @@ func (h *hlsSession) siloDSMWait(ctx context.Context, s *Server, dir, name strin
 		now := lastSegmentIndex(dir)
 		starting := now < start
 		if index > now+hlsForwardGap || (!starting && now <= last) {
+			log.Debugf("[Web] Silo DSM: session %s gives up on segment %d (ffmpeg from %d, ready up to %d, was %d)",
+				h.ID, index, start, now, last)
 			return false
 		}
+		log.Debugf("[Web] Silo DSM: session %s still waits for segment %d (ready up to %d)", h.ID, index, now)
 		last = now
 	}
 }
 
 // siloDSMSetCursor remembers the segment the player asked for.
-func (h *hlsSession) siloDSMSetCursor(index int) {
+func (h *hlsSession) siloDSMSetCursor(s *Server, index int) {
 	h.mu.Lock()
 	h.siloDSMCursor = index + 1
+	start := h.startIndex
 	h.mu.Unlock()
+	log.Debugf("[Web] Silo DSM: session %s wants segment %d (ffmpeg from %d, ready up to %d)",
+		h.ID, index, start, lastSegmentIndex(h.workDir(s)))
 }
 
 // siloDSMCleanupFrom is the segment the cleanup window is counted from;
@@ -87,9 +94,12 @@ func (h *hlsSession) siloDSMSetCursor(index int) {
 // and the player is about to fetch. The player then waits, ffmpeg is
 // restarted, and the same happens 50-60 s later. The player's position moves
 // with the film.
-func (h *hlsSession) siloDSMCleanupFrom() int {
+func (h *hlsSession) siloDSMCleanupFrom(s *Server) int {
+	from := h.startIndex
 	if h.siloDSMCursor > 0 {
-		return h.siloDSMCursor - 1
+		from = h.siloDSMCursor - 1
 	}
-	return h.startIndex
+	log.Debugf("[Web] Silo DSM: session %s playlist requested, keeping segments %d..%d",
+		h.ID, from-s.segmentTail()+1, from+hlsForwardGap)
+	return from
 }

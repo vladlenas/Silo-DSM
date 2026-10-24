@@ -145,8 +145,8 @@ class OverlayTests(unittest.TestCase):
         self.assertNotIn("hlsSegmentWait, done); err == nil", hls)
         self.assertIn("func (h *hlsSession) siloDSMWait(", read(self.path("internal/web/silo_dsm_fixes.go")))
         self.assertIn("\tsiloDSMCursor int\n}", hls)
-        self.assertIn("session.siloDSMSetCursor(index)", hls)
-        self.assertIn("current := h.siloDSMCleanupFrom()", hls)
+        self.assertIn("session.siloDSMSetCursor(s, index)", hls)
+        self.assertIn("current := h.siloDSMCleanupFrom(s)", hls)
         self.assertNotIn("current := h.startIndex", hls)
 
     def test_changed_hls_code_stops_the_build(self):
