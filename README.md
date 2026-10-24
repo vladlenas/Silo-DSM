@@ -105,6 +105,23 @@ scans.
 Plex is asked at most once every 30 seconds; changes in between are sent
 together.
 
+## TorrServer vs Silo (optional plugin)
+
+`battle-<version>.zip` (attached to the release, not built in) compares the
+two servers on the same NAS with the same torrent: time to the first byte, to
+the first 32 MB, reading speed, seek, the torrent speed and peers each server
+reports, as charts and a score. Each run starts cold (the torrent is closed
+first) and the rounds alternate who goes first.
+
+1. Silo → admin panel → **Plugins** → upload the zip; **TorrServer vs Silo**
+   appears in the library menu.
+2. Enter TorrServer's address (`http://<NAS>:8090`), pick a torrent and a
+   file, **Check both servers**, then **Start the battle**.
+
+Run it from a computer on a cable: on Wi-Fi the network to the device can be
+slower than the torrent. Do not open the torrent's card while it runs: an
+open card keeps the torrent awake.
+
 ## Transcoding profiles
 
 The admin panel creates a profile with a few fields only. **Transcoding
@@ -136,7 +153,7 @@ To switch: admin panel → Plugins → **Make theme** on the other one.
 ## Building
 
 ```sh
-make        # spk/Silo-DSM-<version>-amd64.spk + spk/plex-scan-<version>.zip
+make        # spk/Silo-DSM-<version>-amd64.spk + plugin zips (Plex, battle)
 make clean
 ```
 

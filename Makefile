@@ -13,7 +13,7 @@ ARCHES := amd64
 
 # Optional Silo plugins, released as zips next to the package (Silo → admin
 # panel → Plugins → upload). The others in plugins/ are built into Silo.
-PLUGIN_ZIPS := plex-scan
+PLUGIN_ZIPS := plex-scan battle
 
 all: $(addprefix silo-,$(ARCHES)) plugins
 

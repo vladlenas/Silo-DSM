@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="plugin.battle.page_title">TorrServer vs Silo</title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/silo-look.js"></script>
+    <script src="/i18n.js"></script>
+    <style>
+        :root { --b-ts: #e8a33d; --b-silo: #3aa3a0; }
+        .page-wrap { display: flex; justify-content: center; padding: 24px 32px; min-height: 100vh; }
+        .page-inner { width: 100%; max-width: 980px; }
+        .panel { max-width: 100%; }
+        .panel h2:not(:first-child) { margin-top: 22px; }
+        .form-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px 16px; align-items: center; }
+        .form-grid .input { width: 100%; }
+        .row { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .hint { margin-top: 8px; }
+        .msg-ok { color: var(--silo-teal-bright, #3aa3a0); }
+        .msg-err { color: var(--silo-danger, #d9534f); }
+        .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0; font-size: 13px; }
+        .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+        .score { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; text-align: center; margin: 10px 0 4px; }
+        .score .side { padding: 14px; border-radius: 8px; border: 1px solid var(--silo-border, #ccc); }
+        .score .num { font-size: 34px; font-weight: 700; line-height: 1.1; }
+        .score .vs { font-weight: 700; opacity: .6; }
+        .side.ts .num { color: var(--b-ts); }
+        .side.silo .num { color: var(--b-silo); }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
+        .metric { border: 1px solid var(--silo-border, #ccc); border-radius: 8px; padding: 12px; }
+        .metric h3 { margin: 0 0 2px; font-size: 14px; }
+        .metric .sub { font-size: 12px; opacity: .7; margin-bottom: 8px; }
+        .bar { display: grid; grid-template-columns: 90px 1fr 92px; gap: 8px; align-items: center; margin: 6px 0; font-size: 13px; }
+        .bar .track { height: 14px; border-radius: 4px; background: rgba(127,127,127,.15); overflow: hidden; }
+        .bar .fill { height: 100%; border-radius: 4px; }
+        .bar .val { text-align: right; font-variant-numeric: tabular-nums; }
+        .bar.win .val { font-weight: 700; }
+        .chart-box { position: relative; width: 100%; height: 240px; margin-top: 8px; }
+        canvas { width: 100%; height: 100%; display: block; }
+        table.runs { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+        table.runs th, table.runs td { padding: 6px 8px; border-bottom: 1px solid var(--silo-border, #ddd); text-align: right; white-space: nowrap; }
+        table.runs th:first-child, table.runs td:first-child, table.runs th:nth-child(2), table.runs td:nth-child(2) { text-align: left; }
+        .table-wrap { overflow-x: auto; }
+        #log:empty { display: none; }
+        #log { font-family: ui-monospace, monospace; font-size: 12px; max-height: 220px; overflow: auto; white-space: pre-wrap;
+               background: rgba(127,127,127,.08); border-radius: 6px; padding: 8px; margin-top: 10px; }
+        .progress { height: 6px; border-radius: 3px; background: rgba(127,127,127,.15); overflow: hidden; margin-top: 10px; }
+        .progress > div { height: 100%; width: 0; background: var(--b-silo); transition: width .3s; }
+        @media (max-width: 767px) {
+            .page-wrap { padding: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .bar { grid-template-columns: 70px 1fr 80px; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+    <div class="page-inner">
+        <header class="topbar">
+            <h1 data-i18n="plugin.battle.title">TorrServer vs Silo</h1>
+            <a href="/" class="btn btn-secondary btn-sm" data-i18n="plugin.battle.back">Back</a>
+        </header>
+
+        <div class="panel">
+            <h2 data-i18n="plugin.battle.setup_title">Setup</h2>
+            <p class="hint" data-i18n="plugin.battle.intro">The same torrent is read through both servers the way a player reads it, each time from a cold start (the torrent is closed first). The rounds alternate who goes first, so neither gets a warmed-up swarm.</p>
+            <div class="form-grid" style="margin-top:12px">
+                <label for="f-ts-url" data-i18n="plugin.battle.ts_url">TorrServer address</label>
+                <input class="input" id="f-ts-url" type="text" placeholder="http://192.168.1.10:8090">
+                <label for="f-ts-user" data-i18n="plugin.battle.ts_user">TorrServer login (if set)</label>
+                <input class="input" id="f-ts-user" type="text" autocomplete="off">
+                <label for="f-ts-pass" data-i18n="plugin.battle.ts_pass">TorrServer password</label>
+                <input class="input" id="f-ts-pass" type="password" autocomplete="new-password">
+                <label for="f-torrent" data-i18n="plugin.battle.torrent">Torrent (from Silo)</label>
+                <select class="input" id="f-torrent"></select>
+                <label for="f-file" data-i18n="plugin.battle.file">File</label>
+                <select class="input" id="f-file"></select>
+                <label for="f-volume" data-i18n="plugin.battle.volume">Read from the start, MB</label>
+                <input class="input" id="f-volume" type="number" min="16" value="300">
+                <label for="f-seek" data-i18n="plugin.battle.seek">Read after a seek to the middle, MB</label>
+                <input class="input" id="f-seek" type="number" min="0" value="48">
+                <label for="f-rounds" data-i18n="plugin.battle.rounds">Rounds</label>
+                <select class="input" id="f-rounds"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
+            </div>
+            <p class="hint" data-i18n="plugin.battle.where_hint">Run it from a computer on a cable if you can: on Wi-Fi or a tablet the network to this device can be slower than the torrent and both servers look the same. Close other playback on the NAS and do not open the torrent's card in Silo or TorrServer while the test runs (an open card keeps the torrent awake).</p>
+            <div class="row">
+                <button class="btn btn-secondary" id="btn-check" type="button" data-i18n="plugin.battle.check">Check both servers</button>
+                <button class="btn" id="btn-run" type="button" data-i18n="plugin.battle.run">Start the battle</button>
+                <button class="btn btn-secondary" id="btn-stop" type="button" style="display:none" data-i18n="plugin.battle.stop">Stop</button>
+            </div>
+            <p class="hint" id="check-msg"></p>
+            <div class="progress"><div id="progress"></div></div>
+            <div id="log"></div>
+        </div>
+
+        <div class="panel" id="results" style="display:none">
+            <h2 data-i18n="plugin.battle.results_title">Result</h2>
+            <div class="score">
+                <div class="side ts"><div class="num" id="score-ts">0</div><div>TorrServer</div></div>
+                <div class="vs">vs</div>
+                <div class="side silo"><div class="num" id="score-silo">0</div><div>Silo</div></div>
+            </div>
+            <p class="hint" id="score-hint" data-i18n="plugin.battle.score_hint">Points: who won each measure (average of the rounds).</p>
+            <div class="metrics" id="metrics"></div>
+
+            <h2 data-i18n="plugin.battle.speed_title">Torrent download speed</h2>
+            <div class="legend" id="speed-legend"></div>
+            <div class="chart-box"><canvas id="chart-speed"></canvas></div>
+            <p class="hint" data-i18n="plugin.battle.speed_hint">As each server reports it, every second from the start of reading. Solid line: round 1, dashed: the next rounds.</p>
+
+            <h2 data-i18n="plugin.battle.read_title">Data delivered to the player</h2>
+            <div class="chart-box"><canvas id="chart-read"></canvas></div>
+            <p class="hint" data-i18n="plugin.battle.read_hint">Megabytes read from the start over time: the steeper, the better.</p>
+
+            <h2 data-i18n="plugin.battle.runs_title">All runs</h2>
+            <div class="table-wrap"><table class="runs" id="runs"></table></div>
+            <div class="row">
+                <button class="btn btn-secondary" id="btn-copy" type="button" data-i18n="plugin.battle.copy">Copy as text</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/plugins/battle/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# Runs the same torrent through TorrServer and Silo on the same NAS and shows
+# the numbers side by side: start, buffer, speed, seek.
+id: "battle"
+name: "TorrServer vs Silo"
+version: "1.0.0"
+author: "Silo DSM"
+description: "Speed test: the same torrent through TorrServer and Silo"
+entry: "service.js"
+icon: "/img/ico-battle.svg"
+
+menu:
+  - title: "TorrServer vs Silo"
+    title_key: "plugin.battle.title"
+    route: "/"
+    rank: 100
+    icon: "/img/ico-battle.svg"
+
+routes:
+  - "/"
+  - "/index.html"
+  - "/js/*"
+  - "/img/*"
