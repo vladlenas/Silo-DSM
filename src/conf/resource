@@ -10,6 +10,12 @@
                     "type": "dsm",
                     "relpath": "nginx/Silo.conf"
                 }
+            ],
+            "disable": [
+                {
+                    "type": "dsm",
+                    "relpath": "nginx/Silo.conf"
+                }
             ]
         }
     }

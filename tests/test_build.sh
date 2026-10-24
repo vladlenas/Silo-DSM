@@ -66,6 +66,10 @@ check "config generator shipped"           [ -x x/pkg/helper/siloconf.py ]
 check "install wizard shipped"             [ -f x/WIZARD_UIFILES/install_uifile ]
 check "scripts executable"                 [ -x x/scripts/start-stop-status ] && [ -x x/scripts/restart-silo ]
 check "GPU access requested"               grep -q '"video-driver"' x/conf/resource
+check "nginx route kept from install to uninstall" python3 -c '
+import json, sys
+c = json.load(open(sys.argv[1]))["web-config"]["nginx-static-config"]
+sys.exit(0 if c["enable"] and c["enable"] == c["disable"] else 1)' x/conf/resource
 check "no build leftovers"                 sh -c '! tar -tJf x/package.tgz | grep -q __pycache__'
 
 echo "== the overlay is part of the cache key"

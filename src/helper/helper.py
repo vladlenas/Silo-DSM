@@ -3165,13 +3165,15 @@ def plugin_tick():
     return results
 
 
-# DSM's nginx reaches this Helper through a rule that DSM itself registers
-# from conf/resource. It has been seen to disappear while the package kept
-# running (the DSM window then shows Synology's "page not found"); the package
-# runs without root and cannot restore it. So the Helper checks its own address
-# through nginx and logs when the rule goes missing and when it is back, to
-# find out what removes it. Without a DSM session the Helper answers 403; a
-# 404 comes from nginx itself.
+# DSM's nginx reaches this Helper through a rule from conf/resource. Up to
+# 0.9.1 it was an "enable" rule only: DSM adds its link at package start and
+# removes it at stop, but never reloads nginx, so after stop and start the
+# window often showed Synology's "page not found" until nginx happened to be
+# restarted. Since then the rule is listed as "enable" and "disable", which
+# DSM keeps from install to uninstall (Developer Guide, Web Config). The
+# Helper still checks its own address through nginx and logs when it goes
+# missing and when it is back. Without a DSM session the Helper answers 403;
+# a 404 comes from nginx itself.
 NGINX_ROUTE_PATH = "/webman/3rdparty/{}/helper/".format(PACKAGE_NAME)
 NGINX_PROBE = "/nginx-probe"
 SYNOINFO_FILES = ("/etc/synoinfo.conf", "/etc.defaults/synoinfo.conf")

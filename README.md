@@ -125,9 +125,10 @@ To switch: admin panel → Plugins → **Make theme** on the other one.
 - **Silo does not start / port in use:** Helper → Logs (`Silo.log`); change
   the port in the Helper.
 - **"FFmpeg was not found":** install FFmpeg 8 from SynoCommunity.
-- **The Helper window shows a Synology 404:** DSM's nginx lost the package
-  route (the Helper writes this to `Silo.log`). Reinstall the package over
-  itself or run `sudo systemctl restart nginx`.
+- **The Helper window shows a Synology 404** (up to 0.9.1, after the package
+  was stopped and started): DSM had not reloaded nginx. Fixed in later
+  versions; once, reinstall the package over itself or run
+  `sudo systemctl restart nginx`.
 
 ## Building
 

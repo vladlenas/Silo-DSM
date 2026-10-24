@@ -3,6 +3,16 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## Unreleased
+
+### Fixed
+
+- The package window showed Synology's "page not found" after the package was
+  stopped and started. DSM added the Helper's nginx rule at start and removed
+  it at stop but never reloaded nginx. The rule now stays from install to
+  uninstall (listed for both enabled and disabled, as the DSM Developer Guide
+  describes). Takes effect with the next install over the top.
+
 ## 0.9.1 (2026-10-24)
 
 Silo is updated to the `silo` branch at commit `579ed72` (after `Silo.1`):
