@@ -140,8 +140,11 @@ class OverlayTests(unittest.TestCase):
         server = read(self.path("internal/web/server.go"))
         self.assertIn("AuthMiddleware(s.userSvc), siloDSMValidHash())", server)
         self.assertIn("func siloDSMValidHash()", read(self.path("internal/web/silo_dsm_fixes.go")))
-        # HLS fixes are upstream since 29497f8: nothing of ours in these files
-        self.assertNotIn("siloDSM", read(self.path("internal/web/api_hls.go")))
+        hls = read(self.path("internal/web/api_hls.go"))
+        self.assertIn("<-instance.Done()\n\t}\n\t// Silo DSM", hls)
+        self.assertIn("h.siloDSMDropAhead(s, index)\n\n\tstartAt", hls)
+        self.assertIn("func (h *hlsSession) siloDSMDropAhead(", read(self.path("internal/web/silo_dsm_fixes.go")))
+        # the throttle fix is upstream since 29497f8
         self.assertNotIn("siloDSM", read(self.path("internal/ffmpeg/job/throttle.go")))
         self.assertFalse(os.path.exists(self.path("internal/ffmpeg/job/silo_dsm_throttle.go")))
 

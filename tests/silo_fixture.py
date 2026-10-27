@@ -76,7 +76,9 @@ def make(root):
         "type hlsSession struct {\n\tviewedMarked bool\n}\n"
         "func seg() {\n\tsession.touch()\n\n"
         "\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n}\n"
-        "func cleanup() {\n\th.mu.Lock()\n\tcurrent := h.startIndex\n\th.mu.Unlock()\n}\n")
+        "func cleanup() {\n\th.mu.Lock()\n\tcurrent := h.startIndex\n\th.mu.Unlock()\n}\n"
+        "func restart() {\n\tif instance != nil {\n\t\tinstance.Stop(s.stopTimeout())\n\t\t<-instance.Done()\n\t}\n\n"
+        "\tstartAt := float64(index) * float64(h.segmentLength())\n}\n")
     put(root, "internal/ffmpeg/job/throttle.go",
         "package job\n\nfunc (t *throttler) check() {\n\tstart := t.job.StartIndex()\n"
         "\tproduced := countSegmentsFrom(t.job.WorkDir, start)\n}\n")
