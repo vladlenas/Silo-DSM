@@ -115,6 +115,17 @@ class YamlTests(Base):
         self.assertEqual(loaded["port"], 8100)
         self.assertNotIn("cache_size_mb", loaded)
 
+    def test_throttle_defaults_and_values(self):
+        config = parse_config(sc.render_yaml(sc.DEFAULTS, self.var))
+        self.assertIs(config["ffmpeg"]["throttle"], True)
+        self.assertEqual(int(config["ffmpeg"]["keep_ahead"]), 4)
+        s = sc.normalize({"ffmpeg_throttle": "0", "ffmpeg_keep_ahead": "12"})
+        config = parse_config(sc.render_yaml(s, self.var))
+        self.assertIs(config["ffmpeg"]["throttle"], False)
+        self.assertEqual(int(config["ffmpeg"]["keep_ahead"]), 12)
+        with self.assertRaises(sc.SettingsError):
+            sc.normalize({"ffmpeg_keep_ahead": "1"})
+
     def test_ffprobe_gets_time_for_a_waking_torrent(self):
         config = parse_config(sc.render_yaml(sc.DEFAULTS, self.var))
         self.assertEqual(int(config["ffmpeg"]["probe_timeout_sec"]), 90)

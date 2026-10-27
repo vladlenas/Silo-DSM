@@ -90,6 +90,7 @@ jobs:
       - name: Checksums
         run: |
           cd spk
+          shopt -s nullglob
           sha256sum *.spk *.zip > SHA256SUMS
           cat SHA256SUMS
 
@@ -142,6 +143,7 @@ jobs:
 
           # Silo is early development: every release is a pre-release, and
           # the packages carry beta="yes" (distributed through SSpkS).
+          shopt -s nullglob
           gh release create "v${VERSION}" \
             spk/*.spk spk/*.zip spk/SHA256SUMS \
             --prerelease \

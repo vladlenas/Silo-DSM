@@ -3,6 +3,25 @@
 The top entry is used as the GitHub release notes; keep its version equal to
 `PKG_VERSION` in `Makefile`.
 
+## 0.12.1 (2026-10-27)
+
+Silo is updated to the `silo` branch at commit `29497f8`: it has the HLS
+transcoding fixes of Silo DSM 0.11.1 itself now (the throttle fix as sent,
+the cleanup window and the wait in the author's own version), so the package
+no longer patches them.
+
+### Added
+
+- **Plex is built in again** (library menu → Plex): no zip to upload. A Plex
+  zip uploaded earlier is replaced by the built-in one; its settings stay.
+- **Transcoding profiles:** ffmpeg's playlist (sliding window, or keep every
+  segment), how many segments ffmpeg keeps and the extra ones before
+  deleting.
+- **Helper → Settings → Transcoding:** hold ffmpeg back when it is ahead of
+  the player (on/off) and how many segments it transcodes ahead (4).
+- **Helper → Logs → Clear:** empties `Silo.log` and deletes its older
+  copies; the log now opens at its newest lines.
+
 ## 0.11.1 (2026-10-24)
 
 Silo stays at commit `579ed72`, with fixes for HLS transcoding that are sent

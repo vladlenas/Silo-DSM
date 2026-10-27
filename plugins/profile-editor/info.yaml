@@ -3,7 +3,7 @@
 # subtitles, HLS). Works through Silo's own profile API.
 id: "profile-editor"
 name: "Transcoding Profiles"
-version: "1.0.0"
+version: "1.1.0"
 author: "Silo DSM"
 description: "Every setting of Silo's transcoding profiles: hardware decoding, copy, HDR to SDR, bitrate, subtitles, HLS"
 entry: "service.js"

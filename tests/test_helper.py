@@ -359,6 +359,48 @@ class FuseCardTests(Base):
         self.assertIn("Device /dev/fuse", h.main_page("nas"))
 
 
+class ThrottleFormTests(Base):
+    def test_form_turns_throttle_off_and_sets_keep_ahead(self):
+        params = form(ffmpeg_keep_ahead=10)
+        params.pop("ffmpeg_throttle", None)       # checkbox off
+        self.assertTrue(h.save_settings(params)[0])
+        self.assertFalse(h.get_settings()["ffmpeg_throttle"])
+        self.assertEqual(h.get_settings()["ffmpeg_keep_ahead"], 10)
+        params = form(ffmpeg_throttle=1)
+        self.assertTrue(h.save_settings(params)[0])
+        self.assertTrue(h.get_settings()["ffmpeg_throttle"])
+
+    def test_settings_page_shows_the_fields(self):
+        page = h.settings_page()
+        self.assertIn('name="ffmpeg_throttle"', page)
+        self.assertIn('name="ffmpeg_keep_ahead"', page)
+
+
+class ClearLogTests(Base):
+    def test_clear_empties_the_log_and_removes_old_copies(self):
+        for name, text in (("Silo.log", "new\n"), ("Silo.log.1", "old\n"), ("Silo.log.2", "older\n")):
+            with open(h.LOG_FILES[name], "w") as f:
+                f.write(text)
+        # a writer that keeps its descriptor (like Silo's stdout, opened with >>)
+        writer = open(h.SILO_LOG, "a")
+        self.addCleanup(writer.close)
+        self.assertEqual(h.clear_logs(), (True, ""))
+        self.assertFalse(os.path.exists(h.LOG_FILES["Silo.log.1"]))
+        self.assertFalse(os.path.exists(h.LOG_FILES["Silo.log.2"]))
+        writer.write("after\n")
+        writer.flush()
+        text = slurp(h.SILO_LOG)
+        self.assertNotIn("new", text)
+        self.assertIn("log cleared", text)
+        self.assertTrue(text.endswith("after\n"))
+        self.assertNotIn("\0", text)
+
+    def test_logs_page_has_the_button(self):
+        page = h.logs_page()
+        self.assertIn("clearLogs()", page)
+        self.assertIn("clear-log", page)
+
+
 class FolderTests(Base):
     def test_unwritable_folder_names_the_share(self):
         root = tempfile.mkdtemp()

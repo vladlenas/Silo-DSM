@@ -978,7 +978,7 @@ def is_port_in_use(port_number, allowed_ports=None):
 # are off, so they are handled separately.
 FORM_FIELDS = (
     "port", "data_dir", "log_level", "ffmpeg_hwaccel", "ffmpeg_hw_device",
-    "ffmpeg_threads", "ffmpeg_max_sessions", "ffmpeg_cache_dir",
+    "ffmpeg_threads", "ffmpeg_max_sessions", "ffmpeg_cache_dir", "ffmpeg_keep_ahead",
 )
 
 
@@ -998,6 +998,7 @@ def save_settings(params):
     full_form = field("form") == "settings"
     if full_form:
         raw["ffmpeg_enabled"] = field("ffmpeg_enabled", "0") == "1"
+        raw["ffmpeg_throttle"] = field("ffmpeg_throttle", "0") == "1"
 
     # Password: unchanged while the placeholder is shown; off when the
     # checkbox is cleared.
@@ -1088,6 +1089,24 @@ def rotate_log(path):
 
     except Exception:
         pass
+
+
+def clear_logs():
+    """Empties Silo.log and removes its rotated copies.
+
+    Silo and the scripts write with O_APPEND (>>), so after the truncate they
+    simply continue at the new end of the file."""
+    try:
+        for name, path in LOG_FILES.items():
+            if name == "Silo.log":
+                if os.path.isfile(path):
+                    os.truncate(path, 0)
+            elif os.path.exists(path):
+                os.remove(path)
+    except OSError as e:
+        return False, str(e)
+    helper_log("log cleared from the package window")
+    return True, ""
 
 
 def rotate_log_if_needed():
@@ -2522,6 +2541,19 @@ To apply changes, click <b>Save</b>, then <b>Restart</b>.<br>The settings are wr
             <input id="maxSessions" type="number" name="ffmpeg_max_sessions" min="0" max="32" value="{max_sessions}">
         </div>
 
+        <div class="checkbox-row">
+            <label>
+                <input type="checkbox" name="ffmpeg_throttle" value="1" {throttle_checked}>
+                Hold FFmpeg back when it is ahead of the player
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label for="keepAhead">Segments to transcode ahead</label>
+            <input id="keepAhead" type="number" name="ffmpeg_keep_ahead" min="2" max="30" value="{keep_ahead}">
+        </div>
+        <div class="help">FFmpeg is paused when it is this many segments (4 s each) ahead of the player and goes on when the player catches up. More gives the player a bigger reserve on a slow network and uses more space in the cache folder. Off: FFmpeg never pauses.</div>
+
         <div class="form-row">
             <label for="cacheDir">Transcoding cache folder</label>
             <div class="path-picker">
@@ -2580,6 +2612,8 @@ toggleAuth();
         hw_device=html.escape(settings["ffmpeg_hw_device"], quote=True),
         threads=settings["ffmpeg_threads"],
         max_sessions=settings["ffmpeg_max_sessions"],
+        throttle_checked="checked" if settings["ffmpeg_throttle"] else "",
+        keep_ahead=settings["ffmpeg_keep_ahead"],
         cache_dir=html.escape(settings["ffmpeg_cache_dir"], quote=True),
         default_cache_dir=html.escape(
             os.path.join(siloconf.resolved_data_dir(settings, PACKAGE_VAR), "transcode"), quote=True),
@@ -2752,6 +2786,8 @@ def logs_page():
        href="./download-log?name=Silo.log">
         ↓ Download
     </a>
+
+    <button type="button" class="secondary" onclick="clearLogs()">✕ Clear</button>
 </div>
 
 <pre id="logContent" class="logs-output">Loading Silo.log...</pre>
@@ -2778,13 +2814,41 @@ function openLog() {{
             return response.text();
         }})
         .then(function(data) {{
-            document.getElementById("logContent").textContent = data;
+            var box = document.getElementById("logContent");
+            box.textContent = data;
+            // The newest lines are at the end: show them first
+            box.scrollTop = box.scrollHeight;
             document.getElementById("downloadButton").href =
                 basePath + "download-log?name=" + encodeURIComponent(name);
         }})
         .catch(function(error) {{
             document.getElementById("logContent").textContent =
                 "Unable to read log: " + error;
+        }});
+}}
+
+function clearLogs() {{
+    if (!window.confirm("Clear the log? Silo.log is emptied and its older copies are deleted.")) {{
+        return;
+    }}
+    var basePath = window.location.pathname.substring(
+        0,
+        window.location.pathname.lastIndexOf("/") + 1
+    );
+    fetch(basePath + "clear-log" + window.location.search, {{
+        method: "POST",
+        headers: {{"Content-Type": "application/x-www-form-urlencoded"}},
+        body: "confirm=1"
+    }})
+        .then(function(response) {{
+            if (!response.ok) {{
+                throw new Error("HTTP " + response.status);
+            }}
+            window.location.reload();
+        }})
+        .catch(function(error) {{
+            document.getElementById("logContent").textContent =
+                "Unable to clear the log: " + error;
         }});
 }}
 
@@ -3097,6 +3161,17 @@ class Handler(BaseHTTPRequestHandler):
             print("helper: VAAPI test on {}: {}".format(device, "OK" if ok else "FAILED"),
                   file=sys.stderr, flush=True)
             self.redirect("./")
+            return
+
+        if path == "/clear-log":
+            ok, message = clear_logs()
+            if ok:
+                self.send_response(204)
+                self.send_header("Content-Length", "0")
+                self.send_security_headers()
+                self.end_headers()
+            else:
+                self.send_html(html.escape(message), 500)
             return
 
         if path == "/restart":

@@ -11,8 +11,8 @@ added to the source tree right before `go build`:
   the Default Web UI scripts plus js/dsm.js, so the library works exactly as
   upstream wrote it. Default Web UI itself is not touched: "Make theme" on it
   in the admin panel brings Silo's own look back.
-* TorrServer Import and Transcoding Profiles (plugins/) become built-in
-  plugins. Plex is not built in: it goes next to the package as a zip.
+* TorrServer Import, Transcoding Profiles and Plex (plugins/) become built-in
+  plugins.
 * internal/web/static/css/style.css (admin panel, login page, plugin pages)
   gets overlay/static/dsm-core.css appended. It only applies under
   html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme.
@@ -166,12 +166,12 @@ def dsm_ui(src, overlay):
         write(dest, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
-# Plugins of this repository that are compiled into Silo (plugins/plex-scan
-# is not: few need it, it is released as a zip next to the package):
+# Plugins of this repository that are compiled into Silo:
 # (folder in plugins/, folder in internal/plugin/, Go variable)
 BUILTIN_PLUGINS = (
     ("torrserver-import", "torrserver_import", "torrserverImportFiles"),
     ("profile-editor", "profile_editor", "profileEditorFiles"),
+    ("plex-scan", "plex_scan", "plexScanFiles"),
 )
 
 
@@ -221,50 +221,12 @@ CORE_FIXES = (
         'api := s.router.Group("/api", AuthMiddleware(s.userSvc), siloDSMValidHash())\n',
         "a short :hash made the torrent handlers panic",
     ),
-    (
-        "internal/web/api_hls.go",
-        "\t\t\t\tif err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {\n",
-        "\t\t\t\t// Silo DSM: wait on while ffmpeg makes progress (silo_dsm_fixes.go)\n"
-        "\t\t\t\tif h.siloDSMWait(ctx, s, dir, name, index, start, done) {\n",
-        "a segment slower than 15 s restarted ffmpeg again and again (4K HDR)",
-    ),
-    (
-        "internal/web/api_hls.go",
-        "\tviewedMarked bool\n}\n",
-        "\tviewedMarked bool\n\n"
-        "\t// Silo DSM: segment the player asked for last, plus one (0: none yet)\n"
-        "\tsiloDSMCursor int\n}\n",
-        "the cleanup window (next entry) needs the player's position",
-    ),
-    (
-        "internal/web/api_hls.go",
-        "\tsession.touch()\n\n\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n",
-        "\tsession.touch()\n\tsession.siloDSMSetCursor(index)\n\n"
-        "\tctx, cancel := context.WithTimeout(c.Request.Context(), s.hlsWaitTimeout())\n",
-        "the cleanup window (next entry) needs the player's position",
-    ),
-    (
-        "internal/web/api_hls.go",
-        "\tcurrent := h.startIndex\n\th.mu.Unlock()\n",
-        "\tcurrent := h.siloDSMCleanupFrom()\n\th.mu.Unlock()\n",
-        "cleanup kept segments only up to ffmpeg's start + 12 and deleted the "
-        "ones the player needed next: playback broke 50-60 s after every start",
-    ),
-    (
-        "internal/ffmpeg/job/throttle.go",
-        "\tproduced := countSegmentsFrom(t.job.WorkDir, start)\n",
-        "\tproduced := siloDSMProducedFrom(t.job.WorkDir, start) // Silo DSM\n",
-        "ffmpeg deletes old segments (sliding window), so counting files "
-        "never let the throttle pause it: ffmpeg ran ahead and deleted "
-        "segments before the player fetched them",
-    ),
 )
 
 
 # New Go files of the fixes: (file in overlay/core/, package folder in Silo)
 CORE_FILES = (
     ("silo_dsm_fixes.go", "internal/web"),
-    ("silo_dsm_throttle.go", "internal/ffmpeg/job"),
 )
 
 

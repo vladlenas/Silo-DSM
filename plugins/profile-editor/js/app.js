@@ -60,6 +60,9 @@ var SECTIONS = [
     ['hls', 'HLS', [
         ['hls.segment_length', 'int', null, 'h_segment', 'Segment length, s'],
         ['hls.segment_type', 'select', ['mpegts', 'fmp4'], 'h_type', 'Segment type'],
+        ['hls.playlist_type', 'select', ['', 'event', 'vod'], 'h_playlist', 'ffmpeg playlist'],
+        ['hls.list_size', 'int', null, 'h_list_size', 'Segments ffmpeg keeps (0 = 6)'],
+        ['hls.delete_threshold', 'int', null, 'h_delete', 'Extra segments before deleting (0 = 1)'],
     ]],
 ];
 
@@ -75,11 +78,14 @@ var VALUE_LABELS = {
     'subtitles.mode': { off: ['val_off', 'off'], copy: ['val_sub_copy', 'copy tracks'],
         burn: ['val_sub_burn', 'burn into the picture (heavy)'] },
     visibility: { private: ['val_private', 'only me'], public: ['val_public', 'everyone'] },
+    'hls.playlist_type': { '': ['val_sliding', 'sliding window (old segments deleted)'],
+        event: ['val_event', 'keep every segment'], vod: ['val_vod', 'keep every segment (VOD)'] },
 };
 
 var HINTS = {
     video: ['hint_video', 'With VAAPI, turn on decoding on the video card for 4K and HDR: otherwise the processor unpacks the source.'],
     subtitles: ['hint_subs', 'Burning subtitles in is done by the processor and is slow on NAS models.'],
+    hls: ['hint_hls', 'ffmpeg playlist: with the sliding window ffmpeg deletes old segments and keeps only the newest ones (the usual choice). "Keep every segment" deletes nothing while the film plays: no segment can go missing, but the transcoded film fills the cache folder (several GB). Segments ffmpeg keeps and extra segments only apply to the sliding window.'],
 };
 
 var profiles = [];

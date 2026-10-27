@@ -128,5 +128,11 @@
   "↓ Download": "↓ Завантажити",
   "↻ Refresh": "↻ Оновити",
   "♥ Support Silo DSM project ↗": "♥ Підтримати проєкт Silo DSM ↗",
-  "♥ Support TorrServer project ↗": "♥ Підтримати проєкт TorrServer ↗"
+  "♥ Support TorrServer project ↗": "♥ Підтримати проєкт TorrServer ↗",
+  "✕ Clear": "✕ Очистити",
+  "Clear the log? Silo.log is emptied and its older copies are deleted.": "Очистити журнал? Silo.log буде спорожнено, його старі копії видалено.",
+  "Unable to clear the log: ": "Не вдалося очистити журнал: ",
+  "Hold FFmpeg back when it is ahead of the player": "Притримувати FFmpeg, коли він випередив плеєр",
+  "Segments to transcode ahead": "Сегментів кодувати наперед",
+  "FFmpeg is paused when it is this many segments (4 s each) ahead of the player and goes on when the player catches up. More gives the player a bigger reserve on a slow network and uses more space in the cache folder. Off: FFmpeg never pauses.": "FFmpeg ставиться на паузу, коли випереджає плеєр на стільки сегментів (по 4 с), і продовжує, коли плеєр наздоганяє. Більше — більший запас для плеєра при повільній мережі й більше місця в теці кешу. Вимкнено — FFmpeg не зупиняється."
 }

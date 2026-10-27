@@ -87,15 +87,14 @@ Helper → Status → **FUSE** shows whether `/dev/fuse`, `fusermount` and
 `user_allow_other` are there and where Silo is mounted. A mount left behind by
 a crash is released at the next start.
 
-## Plex (optional plugin)
+## Plex
 
-`plex-scan-<version>.zip` (attached to each release, not built in) asks Plex
-to scan its libraries when torrents are added to, changed in or removed from
+**Plex** is built in (admin panel → Plugins, menu item in the library). It
+asks Plex to scan its libraries when torrents are added to, changed in or removed from
 Silo, so a Plex library on the FUSE folder stays current without scheduled
 scans.
 
-1. Silo → admin panel → **Plugins** → upload the zip; **Plex** appears in the
-   library menu.
+1. Open **Plex** in the library menu.
 2. Enter the Plex address (`http://127.0.0.1:32400` on the same NAS) and the
    Plex token (Plex Web → any movie → ⋯ → Get Info → View XML → the
    `X-Plex-Token` value in the address).
@@ -110,7 +109,12 @@ together.
 The admin panel creates a profile with a few fields only. **Transcoding
 profiles** in the library menu shows all of them: decoding on the video card
 (needed for 4K and HDR with VAAPI), keeping video and audio that need no
-transcoding, HDR to SDR, quality, bitrate, subtitles, HLS.
+transcoding, HDR to SDR, quality, bitrate, subtitles, HLS and ffmpeg's
+playlist (sliding window or keep every segment).
+
+How far ffmpeg may run ahead of the player is a server setting: Helper →
+Settings → Transcoding → **Segments to transcode ahead** (4 by default), or
+turn holding ffmpeg back off.
 
 ## Look
 
@@ -126,7 +130,8 @@ To switch: admin panel → Plugins → **Make theme** on the other one.
 ## Troubleshooting
 
 - **Silo does not start / port in use:** Helper → Logs (`Silo.log`); change
-  the port in the Helper.
+  the port in the Helper. **Clear** there empties the log, so the next test
+  starts with a short one.
 - **"FFmpeg was not found":** install FFmpeg 8 from SynoCommunity.
 - **The Helper window shows a Synology 404** (up to 0.9.1, after the package
   was stopped and started): DSM had not reloaded nginx. Fixed in later
@@ -136,7 +141,7 @@ To switch: admin panel → Plugins → **Make theme** on the other one.
 ## Building
 
 ```sh
-make        # spk/Silo-DSM-<version>-amd64.spk + spk/plex-scan-<version>.zip
+make        # spk/Silo-DSM-<version>-amd64.spk
 make clean
 ```
 
@@ -145,7 +150,7 @@ and the plugins of `plugins/` to the Silo source as built-in plugins before
 compiling, plus small fixes for Silo bugs (`overlay/core/`), and stops the
 build when an upstream change no longer fits. `Makefile` pins `SILO_VERSION`, `SILO_COMMIT` and
 `PKG_VERSION`; a change of `PKG_VERSION` on `main` builds and publishes a
-GitHub pre-release with the `.spk`, the Plex plugin zip and `SHA256SUMS`.
+GitHub pre-release with the `.spk` and `SHA256SUMS`.
 
 Tests:
 

@@ -56,5 +56,12 @@
   "plugin.profed.val_sub_burn": "burn into the picture (heavy)",
   "plugin.profed.val_sub_copy": "copy tracks",
   "plugin.profed.val_vaapi": "VAAPI (Intel)",
-  "plugin.profed.visibility": "Visible to"
+  "plugin.profed.visibility": "Visible to",
+  "plugin.profed.h_playlist": "ffmpeg playlist",
+  "plugin.profed.h_list_size": "Segments ffmpeg keeps (0 = 6)",
+  "plugin.profed.h_delete": "Extra segments before deleting (0 = 1)",
+  "plugin.profed.val_sliding": "sliding window (old segments deleted)",
+  "plugin.profed.val_event": "keep every segment",
+  "plugin.profed.val_vod": "keep every segment (VOD)",
+  "plugin.profed.hint_hls": "ffmpeg playlist: with the sliding window ffmpeg deletes old segments and keeps only the newest ones (the usual choice). \"Keep every segment\" deletes nothing while the film plays: no segment can go missing, but the transcoded film fills the cache folder (several GB). Segments ffmpeg keeps and extra segments only apply to the sliding window."
 }

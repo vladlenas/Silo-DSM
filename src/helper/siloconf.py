@@ -65,6 +65,9 @@ DEFAULTS = {
     "ffmpeg_threads": 0,
     "ffmpeg_max_sessions": 3,
     "ffmpeg_cache_dir": "",
+    # Silo pauses ffmpeg when it is keep_ahead segments ahead of the player.
+    "ffmpeg_throttle": True,
+    "ffmpeg_keep_ahead": 4,
 }
 
 # name -> (minimum, maximum) for the integer settings.
@@ -72,6 +75,7 @@ INT_RANGES = {
     "port": (1024, 65535),
     "ffmpeg_threads": (0, 64),
     "ffmpeg_max_sessions": (0, 32),
+    "ffmpeg_keep_ahead": (2, 30),
 }
 
 PASSWORD_MAX_LENGTH = 128
@@ -165,6 +169,9 @@ def normalize(raw):
 
     if "ffmpeg_enabled" in raw:
         result["ffmpeg_enabled"] = _as_bool(raw["ffmpeg_enabled"])
+
+    if "ffmpeg_throttle" in raw:
+        result["ffmpeg_throttle"] = _as_bool(raw["ffmpeg_throttle"])
 
     if "log_level" in raw:
         level = str(raw["log_level"]).strip().lower()
@@ -297,6 +304,8 @@ def render_yaml(settings, var=None):
             # that has just woken up may need longer than Silo's 30 s to
             # deliver the first megabytes ("ffprobe failed: signal: killed").
             ("probe_timeout_sec", PROBE_TIMEOUT_SEC),
+            ("throttle", settings["ffmpeg_throttle"]),
+            ("keep_ahead", settings["ffmpeg_keep_ahead"]),
         ]),
     ]
 

@@ -2,9 +2,9 @@
 # three together: SILO_VERSION is the upstream tag (or a name for the commit),
 # SILO_COMMIT the full commit id, and the last number of PKG_VERSION is the
 # Silo build (Silo.1 -> x.y.1).
-SILO_VERSION := Silo.1-579ed72
-SILO_COMMIT := 579ed72eada1f0804f90549be9a225959363c74b
-PKG_VERSION := 0.11.1
+SILO_VERSION := Silo.1-29497f8
+SILO_COMMIT := 29497f84d43b0f1c9b54f4ee7abe449c7362a536
+PKG_VERSION := 0.12.1
 
 # Only amd64 is released for now (build-package.sh also knows arm64 and arm7).
 ARCHES := amd64
@@ -12,8 +12,9 @@ ARCHES := amd64
 .PHONY: all binaries plugins clean
 
 # Optional Silo plugins, released as zips next to the package (Silo → admin
-# panel → Plugins → upload). The others in plugins/ are built into Silo.
-PLUGIN_ZIPS := plex-scan
+# panel → Plugins → upload). None at the moment: the plugins in plugins/ are
+# built into Silo (overlay/apply.py, BUILTIN_PLUGINS).
+PLUGIN_ZIPS :=
 
 all: $(addprefix silo-,$(ARCHES)) plugins
 

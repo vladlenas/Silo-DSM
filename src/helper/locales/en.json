@@ -128,5 +128,11 @@
   "↓ Download": "↓ Download",
   "↻ Refresh": "↻ Refresh",
   "♥ Support Silo DSM project ↗": "♥ Support Silo DSM project ↗",
-  "♥ Support TorrServer project ↗": "♥ Support TorrServer project ↗"
+  "♥ Support TorrServer project ↗": "♥ Support TorrServer project ↗",
+  "✕ Clear": "✕ Clear",
+  "Clear the log? Silo.log is emptied and its older copies are deleted.": "Clear the log? Silo.log is emptied and its older copies are deleted.",
+  "Unable to clear the log: ": "Unable to clear the log: ",
+  "Hold FFmpeg back when it is ahead of the player": "Hold FFmpeg back when it is ahead of the player",
+  "Segments to transcode ahead": "Segments to transcode ahead",
+  "FFmpeg is paused when it is this many segments (4 s each) ahead of the player and goes on when the player catches up. More gives the player a bigger reserve on a slow network and uses more space in the cache folder. Off: FFmpeg never pauses.": "FFmpeg is paused when it is this many segments (4 s each) ahead of the player and goes on when the player catches up. More gives the player a bigger reserve on a slow network and uses more space in the cache folder. Off: FFmpeg never pauses."
 }

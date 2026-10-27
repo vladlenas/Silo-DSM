@@ -56,5 +56,12 @@
   "plugin.profed.val_sub_burn": "впечатать в картинку (тяжело)",
   "plugin.profed.val_sub_copy": "копировать дорожки",
   "plugin.profed.val_vaapi": "VAAPI (Intel)",
-  "plugin.profed.visibility": "Кому видно"
+  "plugin.profed.visibility": "Кому видно",
+  "plugin.profed.h_playlist": "Плейлист ffmpeg",
+  "plugin.profed.h_list_size": "Сегментов держит ffmpeg (0 = 6)",
+  "plugin.profed.h_delete": "Запас сегментов до удаления (0 = 1)",
+  "plugin.profed.val_sliding": "скользящее окно (старые сегменты удаляются)",
+  "plugin.profed.val_event": "хранить все сегменты",
+  "plugin.profed.val_vod": "хранить все сегменты (VOD)",
+  "plugin.profed.hint_hls": "Плейлист ffmpeg: в скользящем окне ffmpeg удаляет старые сегменты и держит только последние (обычный выбор). «Хранить все сегменты» ничего не удаляет во время просмотра: сегменты не пропадут, но перекодированный фильм займёт папку кэша (несколько ГБ). «Сегментов держит ffmpeg» и «Запас» действуют только в скользящем окне."
 }
