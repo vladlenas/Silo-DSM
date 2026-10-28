@@ -1,7 +1,9 @@
 # Changelog
 
 The top entry is used as the GitHub release notes; keep its version equal to
-`PKG_VERSION` in `Makefile`.
+`PKG_VERSION` in `Makefile`. Package Center shows it as "What's new" too
+(tools/changelog_info.py): the opening sentence and one item per bullet, the
+bold part with what follows it, so keep those short.
 
 ## 0.12.1 (2026-10-27)
 
