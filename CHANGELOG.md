@@ -1,7 +1,28 @@
 # Changelog
 
 The top entry is used as the GitHub release notes; keep its version equal to
-`PKG_VERSION` in `Makefile`.
+`PKG_VERSION` in `Makefile`. Package Center shows it as "What's new" too
+(tools/changelog_info.py): the opening sentence and one item per bullet, the
+bold part with what follows it, so keep those short.
+
+## 0.13.1 (2026-10-31)
+
+Silo is updated to the `silo` branch at commit `332fee3`: seeking back no
+longer restarts ffmpeg at every segment (the fix sent from Silo DSM, taken
+as is).
+
+### Added
+
+- **Silo as a TorrServer:** Seena, Lampa, the TorrServe client and other
+  apps take `http://<NAS>:8095` as their TorrServer address. They add
+  torrents to Silo and play them from Silo; the built-in plugin TorrServer
+  API keeps an optional login and password and lists what apps added.
+- **Package Center shows what is new** in each version.
+
+### Known limits
+
+- Apps can add magnet links and hashes, not links to `.torrent` files.
+- No GStreamer transcoding of TorrServer: the app plays the file as it is.
 
 ## 0.12.1 (2026-10-27)
 

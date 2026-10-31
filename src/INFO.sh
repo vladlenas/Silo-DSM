@@ -9,6 +9,10 @@ SILO_VERSION="${4:?Silo version is required}"
 
 TIMESTAMP="$(date -u +%Y%m%d-%H:%M:%S)"
 
+# "What's new" in Package Center: the CHANGELOG.md entry of this version.
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+CHANGELOG_LINE="$(python3 "${REPO_DIR}/tools/changelog_info.py" "${REPO_DIR}/CHANGELOG.md" "${PKG_VERSION}" 2>/dev/null || true)"
+
 # Same minimum as TorrServer DSM.
 OS_MIN_VER="7.3-81180"
 
@@ -63,3 +67,7 @@ package_icon_256="PACKAGE_ICON_256.PNG"
 create_time="${TIMESTAMP}"
 extractsize=${PKG_SIZE}
 EOF
+
+if [ -n "${CHANGELOG_LINE}" ]; then
+    printf 'changelog="%s"\n' "${CHANGELOG_LINE}"
+fi

@@ -11,8 +11,8 @@ added to the source tree right before `go build`:
   the Default Web UI scripts plus js/dsm.js, so the library works exactly as
   upstream wrote it. Default Web UI itself is not touched: "Make theme" on it
   in the admin panel brings Silo's own look back.
-* TorrServer Import, Transcoding Profiles and Plex (plugins/) become built-in
-  plugins.
+* TorrServer Import, Transcoding Profiles, Plex and TorrServer API (plugins/)
+  become built-in plugins; the root paths of TorrServer's API go to the last.
 * internal/web/static/css/style.css (admin panel, login page, plugin pages)
   gets overlay/static/dsm-core.css appended. It only applies under
   html.silo-dsm, which /js/silo-look.js sets while DSM Style UI is the theme.
@@ -172,6 +172,7 @@ BUILTIN_PLUGINS = (
     ("torrserver-import", "torrserver_import", "torrserverImportFiles"),
     ("profile-editor", "profile_editor", "profileEditorFiles"),
     ("plex-scan", "plex_scan", "plexScanFiles"),
+    ("torrserver-api", "torrserver_api", "torrserverAPIFiles"),
 )
 
 
@@ -220,6 +221,14 @@ CORE_FIXES = (
         'api := s.router.Group("/api", AuthMiddleware(s.userSvc))\n',
         'api := s.router.Group("/api", AuthMiddleware(s.userSvc), siloDSMValidHash())\n',
         "a short :hash made the torrent handlers panic",
+    ),
+    (
+        "internal/web/server.go",
+        '\ts.router.Handle("PROPFIND", "/plugins/:id/*path", s.pluginsRouter.Dispatch)\n}\n',
+        '\ts.router.Handle("PROPFIND", "/plugins/:id/*path", s.pluginsRouter.Dispatch)\n'
+        '\n\t// Silo DSM: TorrServer API for apps (silo_dsm_fixes.go)\n'
+        '\tsiloDSMTorrServerRoutes(s)\n}\n',
+        "apps that know TorrServer find its API at the root of the port",
     ),
 )
 

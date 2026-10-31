@@ -104,6 +104,18 @@ scans.
 Plex is asked at most once every 30 seconds; changes in between are sent
 together.
 
+## Silo as a TorrServer
+
+Apps that work with TorrServer (Seena, Lampa, the TorrServe client) can use
+Silo instead: enter `http://<NAS>:8095` as the TorrServer address in the app.
+Torrents chosen there are added to Silo's library and play from Silo. The
+built-in plugin **TorrServer API** (library menu) shows the address, keeps an
+optional login and password for apps and lists what apps added.
+
+Magnet links and hashes can be added; a result with only a link to a
+`.torrent` file cannot yet. TorrServer's GStreamer transcoding is not there:
+the app plays the file as it is.
+
 ## Transcoding profiles
 
 The admin panel creates a profile with a few fields only. **Transcoding
