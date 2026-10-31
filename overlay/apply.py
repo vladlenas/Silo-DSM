@@ -230,6 +230,14 @@ CORE_FIXES = (
         '\tsiloDSMTorrServerRoutes(s)\n}\n',
         "apps that know TorrServer find its API at the root of the port",
     ),
+    (
+        "internal/web/api_hls.go",
+        "\t\tinstance.Stop(s.stopTimeout())\n\t\t<-instance.Done()\n\t}\n\n\tstartAt := float64(index)",
+        "\t\tinstance.Stop(s.stopTimeout())\n\t\t<-instance.Done()\n\t}\n"
+        "\t// Silo DSM: segments of another place must not count as made (silo_dsm_fixes.go)\n"
+        "\th.siloDSMDropAhead(s, index)\n\n\tstartAt := float64(index)",
+        "after a seek back, left-over segments further on restarted ffmpeg at every segment",
+    ),
 )
 
 
