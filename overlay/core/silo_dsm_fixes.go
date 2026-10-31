@@ -45,6 +45,9 @@ func siloDSMTorrServerRoutes(s *Server) {
 	}
 	for _, p := range siloDSMTorrServerPaths {
 		s.router.Any(p, alias)
+	}
+}
+
 // siloDSMDropAhead removes the segments from index on before ffmpeg is
 // started there; the old process is already stopped.
 //
