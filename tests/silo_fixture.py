@@ -68,7 +68,8 @@ def make(root):
     put(root, "internal/plugin/builtin.go", BUILTIN_GO)
     # The lines the core fixes change, as in Silo.1.
     put(root, "internal/web/server.go",
-        "package web\n\nfunc routes() {\n\tapi := s.router.Group(\"/api\", AuthMiddleware(s.userSvc))\n}\n")
+        "package web\n\nfunc routes() {\n\tapi := s.router.Group(\"/api\", AuthMiddleware(s.userSvc))\n"
+        "\ts.router.Handle(\"PROPFIND\", \"/plugins/:id/*path\", s.pluginsRouter.Dispatch)\n}\n")
     put(root, "internal/web/api_hls.go",
         "package web\n\nfunc ensure() {\n\t\t\tdefault:\n"
         "\t\t\t\tif err := hls.WaitForSegment(h.playlistPath(s), dir, name, hlsSegmentWait, done); err == nil {\n"

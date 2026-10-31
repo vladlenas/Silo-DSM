@@ -1,0 +1,34 @@
+# Silo as a TorrServer for apps that speak TorrServer's API (Lampa, Seena,
+# TorrServe clients): /echo, /settings, /torrents, /viewed, /cache, /stream,
+# /play. Silo DSM routes these root paths of Silo's port to this plugin
+# (overlay/core/silo_dsm_fixes.go).
+id: "torrserver-api"
+name: "TorrServer API"
+version: "1.0.0"
+author: "Silo DSM"
+description: "Silo as a TorrServer for apps: add and play torrents from Lampa, Seena and others"
+entry: "service.js"
+icon: "/img/ico-tsapi.svg"
+
+menu:
+  - title: "TorrServer API"
+    title_key: "plugin.tsapi.title"
+    route: "/"
+    rank: 100
+    icon: "/img/ico-tsapi.svg"
+
+routes:
+  - "/"
+  - "/index.html"
+  - "/js/*"
+  - "/img/*"
+  - "/api/status"
+  - "/api/settings"
+  - "/echo"
+  - "/settings"
+  - "/torrents"
+  - "/viewed"
+  - "/cache"
+  - "/stream"
+  - "/stream/*"
+  - "/play/*"

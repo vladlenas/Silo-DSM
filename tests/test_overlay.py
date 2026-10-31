@@ -84,7 +84,7 @@ class OverlayTests(unittest.TestCase):
         self.assertIn("//go:embed all:profile_editor", go)
         order = [go.index('"dsm_ui"}'), go.index('"default_ui"}'),
                  go.index('"admin_ui"}'), go.index('"torrserver_import"}'),
-                 go.index('"profile_editor"}'), go.index('"plex_scan"}')]
+                 go.index('"profile_editor"}'), go.index('"plex_scan"}'), go.index('"torrserver_api"}')]
         self.assertIn("//go:embed all:plex_scan", go)
         self.assertEqual(order, sorted(order))
 
@@ -140,6 +140,10 @@ class OverlayTests(unittest.TestCase):
         server = read(self.path("internal/web/server.go"))
         self.assertIn("AuthMiddleware(s.userSvc), siloDSMValidHash())", server)
         self.assertIn("func siloDSMValidHash()", read(self.path("internal/web/silo_dsm_fixes.go")))
+        self.assertIn("\n\t// Silo DSM: TorrServer API for apps (silo_dsm_fixes.go)\n\tsiloDSMTorrServerRoutes(s)\n}", server)
+        fixes = read(self.path("internal/web/silo_dsm_fixes.go"))
+        self.assertIn('"/plugins/torrserver-api" + c.Request.URL.Path', fixes)
+        self.assertIn('id: "torrserver-api"', read(self.path("internal/plugin/torrserver_api/info.yaml")))
         # HLS fixes are upstream since 29497f8: nothing of ours in these files
         self.assertNotIn("siloDSM", read(self.path("internal/web/api_hls.go")))
         self.assertNotIn("siloDSM", read(self.path("internal/ffmpeg/job/throttle.go")))
