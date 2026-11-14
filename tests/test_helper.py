@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import stat
+import sys
 import tempfile
 import time
 import unittest
@@ -149,7 +150,10 @@ class ProcessTests(Base):
         self.addCleanup(setattr, h, "SILO_BIN", old)
 
         self.assertFalse(h.is_silo_running())
-        proc = subprocess.Popen([os.path.join(real, "bin", "silo"), "30"])
+        # argv[0] is the real path of the binary; what runs is Python (a copy of
+        # sleep may be a multi-call binary that does not know the name "silo")
+        proc = subprocess.Popen([os.path.join(real, "bin", "silo"), "-c", "import time; time.sleep(30)"],
+                                executable=sys.executable)
         self.addCleanup(proc.wait)
         self.addCleanup(proc.kill)
         time.sleep(0.2)
@@ -516,7 +520,7 @@ class TranslationTests(Base):
                     if text in NOT_TRANSLATED or not re.search(r"[A-Za-z]{3}", text):
                         continue
                     # System values read from the NAS (CPU name, memory).
-                    if re.search(r"^[0-9.]+ / [0-9.]+ GB$|Intel|AMD|ARM|Processor|x86_64|aarch64", text):
+                    if re.search(r"^[0-9.]+ / [0-9.]+ GB$|Intel|AMD|ARM|Processor|x86_64|aarch64", text, re.I):
                         continue
                     # An English key still on the page: its translation was not applied.
                     self.assertFalse(
