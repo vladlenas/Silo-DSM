@@ -5,6 +5,12 @@ The top entry is used as the GitHub release notes; keep its version equal to
 (tools/changelog_info.py): the opening sentence and one item per bullet, the
 bold part with what follows it, so keep those short.
 
+## 0.14.1 (2026-11-14)
+
+Silo is updated to its release `Silo.2` (commit `3610db8`): the add-torrent
+window fits the screen, and ffmpeg and ffprobe are found independently
+(a file can be probed without ffmpeg).
+
 ## 0.13.1 (2026-10-31)
 
 Silo is updated to the `silo` branch at commit `332fee3`: seeking back no
